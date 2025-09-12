@@ -19,7 +19,7 @@
             <div class="loading mx-auto"></div>
         </div> --}}
         <div class="row" id="content-history" wire:loading.remove wire:target="dateFrom, dateTo">
-            <div class="col-md-6 table-responsive">
+            <div class="col-md-12 table-responsive">
                 <p class="text-rft fw-bold mb-1"> RFT </p>
                 <table class="table table-bordered w-100 mx-auto">
                     <thead>
@@ -48,7 +48,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-md-6 table-responsive">
+            {{-- <div class="col-md-6 table-responsive">
                 <p class="text-reject fw-bold mb-1"> REJECT </p>
                 <table class="table table-bordered w-100 mx-auto">
                     <thead>
@@ -76,8 +76,8 @@
                         @endif
                     </tbody>
                 </table>
-            </div>
-            <div class="col-md-6 table-responsive">
+            </div> --}}
+            {{-- <div class="col-md-6 table-responsive">
                 <p class="text-defect fw-bold mb-1"> DEFECT </p>
                 <table class="table table-bordered w-100 mx-auto">
                     <thead>
@@ -119,8 +119,8 @@
                         @endif
                     </tbody>
                 </table>
-            </div>
-            <div class="col-md-6 table-responsive">
+            </div> --}}
+            {{-- <div class="col-md-6 table-responsive">
                 <p class="text-rework fw-bold mb-1"> REWORK </p>
                 <table class="table table-bordered w-100 mx-auto">
                     <thead>
@@ -162,7 +162,7 @@
                         @endif
                     </tbody>
                 </table>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-8">
                 <div id="daily-chart"></div>
             </div> --}}
