@@ -6,9 +6,9 @@
             <button class="btn btn-success" type="button" id="button-search-order"><i class="fa-regular fa-magnifying-glass"></i></button>
         </div>
         <button class="btn btn-outline-success mb-3" type="button" wire:click="preSubmitFilter" id="filter-button"><i class="fa-regular fa-filter"></i></button>
-        <a href="{{ $this->baseUrl.'/production-panel/universal/' }}" class="btn btn-success mb-3">
+        {{-- <a href="{{ $this->baseUrl.'/production-panel/universal/' }}" class="btn btn-success mb-3">
             <i class="fa-solid fa-globe"></i>
-        </a href="{{ $this->baseUrl.'/production-panel/universal/' }}">
+        </a href="{{ $this->baseUrl.'/production-panel/universal/' }}"> --}}
     </div>
 
     <div class="loading-container-fullscreen hidden" id="loading-order-list">
@@ -86,7 +86,7 @@
                 </a href="{{ $this->baseUrl."/production-panel/index/".$order->id }}">
             @endforeach
         @endif
-        <a href="{{ url('/production-panel/temporary/') }}" class="order col-md-6 h-100">
+        {{-- <a href="{{ url('/production-panel/temporary/') }}" class="order col-md-6 h-100">
             <div class="card h-100">
                 <div class="card-body justify-content-start">
                     <div class="mx-2">
@@ -97,7 +97,7 @@
                     </div>
                 </div>
             </div>
-        </a href="/production-panel/temporary/">
+        </a href="/production-panel/temporary/"> --}}
     </div>
 
     <div class="w-100 mt-3">
@@ -193,8 +193,6 @@
 
 @push('scripts')
     <script>
-        Livewire.emit("loadingStart");
-
         document.addEventListener("DOMContentLoaded", () => {
             $("#loading-order-list").addClass("hidden");
 

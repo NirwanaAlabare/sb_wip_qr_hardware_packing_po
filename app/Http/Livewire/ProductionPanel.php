@@ -18,6 +18,8 @@ use DB;
 
 class ProductionPanel extends Component
 {
+    public $baseUrl;
+
     // Data
     public $orderDate;
     public $orderInfo;
@@ -92,6 +94,8 @@ class ProductionPanel extends Component
 
     public function mount(SessionManager $session, $orderInfo, $orderWsDetails)
     {
+        $this->baseUrl = url('/');
+
         $this->orderInfo = $orderInfo;
         $this->orderWsDetails = $orderWsDetails;
 

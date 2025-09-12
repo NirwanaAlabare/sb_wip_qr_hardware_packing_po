@@ -356,7 +356,10 @@
 
     @if (!$panels)
         {{-- Back --}}
-        <a wire:click="toProductionPanel" class="back bg-success text-light text-center w-auto" id="back-button">
+        {{-- <a wire:click="toOrderList" class="back bg-success text-light text-center w-auto" id="back-button">
+            <i class="fa-regular fa-reply"></i>
+        </a> --}}
+        <a href="{{ $this->baseUrl }}" class="back bg-success text-light text-center w-auto" id="back-button">
             <i class="fa-regular fa-reply"></i>
         </a>
     @endif

@@ -121,7 +121,7 @@ class OrderList extends Component
                 mastersupplier.supplier as buyer_name,
                 act_costing.styleno as style_name,
                 COALESCE(output.progress, 0) as progress,
-                COALESCE(output_endline.progress, 0) as target,
+                COALESCE(output_packing.progress, 0) as target,
                 CONCAT(masterproduct.product_group, ' - ', masterproduct.product_item) as product_type
             ")
             ->leftJoin('act_costing', 'act_costing.id', '=', 'master_plan.id_ws')
@@ -142,7 +142,7 @@ class OrderList extends Component
                         from
                             master_plan
                         left join
-                            output_rfts_packing on output_rfts_packing_po.master_plan_id = master_plan.id
+                            output_rfts_packing_po on output_rfts_packing_po.master_plan_id = master_plan.id
                         where
                             (master_plan.sewing_line = '".strtoupper(Auth::user()->username)."' OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."') AND
                             DATE(output_rfts_packing_po.updated_at) = '".$this->date."' AND
@@ -168,11 +168,11 @@ class OrderList extends Component
                             master_plan.tgl_plan,
                             master_plan.id_ws,
                             master_plan.sewing_line,
-                            count(output_rfts.id) as progress
+                            count(output_rfts_packing.id) as progress
                         from
                             master_plan
                         left join
-                            output_rfts on output_rfts.master_plan_id = master_plan.id
+                            output_rfts_packing on output_rfts_packing.master_plan_id = master_plan.id
                         where
                             (master_plan.sewing_line = '".strtoupper(Auth::user()->username)."' OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."') AND
                             (master_plan.tgl_plan = '".$this->date."' $additionalQuery) AND
@@ -181,12 +181,12 @@ class OrderList extends Component
                             master_plan.sewing_line,
                             master_plan.id_ws,
                             master_plan.tgl_plan
-                    ) output_endline
+                    ) output_packing
                 "),
                 function ($join) {
-                    $join->on("output_endline.sewing_line", "=", "master_plan.sewing_line");
-                    $join->on("output_endline.id_ws", "=", "master_plan.id_ws");
-                    $join->on("output_endline.tgl_plan", "=", "master_plan.tgl_plan");
+                    $join->on("output_packing.sewing_line", "=", "master_plan.sewing_line");
+                    $join->on("output_packing.id_ws", "=", "master_plan.id_ws");
+                    $join->on("output_packing.tgl_plan", "=", "master_plan.tgl_plan");
                 }
             )
             ->where('so_det.cancel', 'N')
@@ -215,7 +215,7 @@ class OrderList extends Component
                 'act_costing.styleno',
                 'product_type',
                 'output.progress',
-                'output_endline.progress',
+                'output_packing.progress',
                 'so.id'
             )
             ->orderBy('master_plan.tgl_plan', 'desc')
