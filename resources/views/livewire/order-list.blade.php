@@ -5,7 +5,7 @@
             <input type="text" class="form-control" wire:model='search' placeholder="Search Order...">
             <button class="btn btn-success" type="button" id="button-search-order"><i class="fa-regular fa-magnifying-glass"></i></button>
         </div>
-        <button class="btn btn-outline-success mb-3" type="button" wire:click="preSubmitFilter" id="filter-button"><i class="fa-regular fa-filter"></i></button>
+        {{-- <button class="btn btn-outline-success mb-3" type="button" wire:click="preSubmitFilter" id="filter-button"><i class="fa-regular fa-filter"></i></button> --}}
         {{-- <a href="{{ $this->baseUrl.'/production-panel/universal/' }}" class="btn btn-success mb-3">
             <i class="fa-solid fa-globe"></i>
         </a href="{{ $this->baseUrl.'/production-panel/universal/' }}"> --}}
@@ -72,7 +72,7 @@
                             <div class="mx-2">
                                 <div class="d-flex justify-content-between w-100">
                                     <p class="mb-1">Output : <b>{{ $order->progress }}</b></p>
-                                    <p class="mb-1">Endline : <b>{{ $order->target }}</b></p>
+                                    <p class="mb-1">Finishline : <b>{{ $order->target }}</b></p>
                                 </div>
                                 <div class="progress" role="progressbar" aria-valuenow="{{ $order->progress }}" aria-valuemin="0" aria-valuemax="{{ $order->target }}" style="height: 15px">
                                     @php

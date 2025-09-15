@@ -7,7 +7,7 @@
     }
 @endphp
 <header>
-    <nav class="navbar bg-body-success navbar-expand">
+    <nav class="navbar bg-body-secondary navbar-expand">
         <div class="container-fluid">
             <div class="d-flex align-items-center">
                 <a class="navbar-brand" href="{{ url('/') }}"><img src="{{ asset('images/Frame 1.png') }}" alt="" width="130"></a>
