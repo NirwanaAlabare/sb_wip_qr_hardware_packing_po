@@ -196,7 +196,7 @@ class ReworkTemporary extends Component
                     'so_det_id' => $defect->so_det_id,
                     "status" => "REWORK",
                     "rework_id" => $createRework->id,
-                    'created_by' => Auth::user()->username,
+                    'created_by' => Auth::user()->line_id,
                     "created_at" => Carbon::now(),
                     "updated_at" => Carbon::now()
                 ]);

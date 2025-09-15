@@ -188,10 +188,10 @@ class ProductionPanel extends Component
         $this->emit('fromInputPanel');
         $this->panels = true;
         $this->rft = false;
-        $this->defect = false;
-        $this->defectHistory = false;
-        $this->reject = false;
-        $this->rework = false;
+        // $this->defect = false;
+        // $this->defectHistory = false;
+        // $this->reject = false;
+        // $this->rework = false;
     }
 
     public function preSubmitUndo($undoType)
@@ -208,8 +208,8 @@ class ProductionPanel extends Component
         $validatedData = $this->validate();
 
         $size = DB::select(DB::raw("SELECT * FROM so_det WHERE id = '".$this->undoSize."'"));
-        $defectType = DB::table('output_defect_types')->select('defect_type')->find($this->undoDefectType);
-        $defectArea = DB::table('output_defect_areas')->select('defect_area')->find($this->undoDefectArea);
+        // $defectType = DB::table('output_defect_types')->select('defect_type')->find($this->undoDefectType);
+        // $defectArea = DB::table('output_defect_areas')->select('defect_area')->find($this->undoDefectArea);
 
         switch ($this->undoType) {
             case 'rft' :
@@ -228,6 +228,7 @@ class ProductionPanel extends Component
                     $addUndoHistory = Undo::create([
                         'master_plan_id' => $getRft->master_plan_id,
                         'so_det_id' => $getRft->so_det_id,
+                        'po_id' => $getRft->po_id,
                         'output_rft_id' => $getRft->id,
                         'keterangan' => 'rft',
                     ]);
