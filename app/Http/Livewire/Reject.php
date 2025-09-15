@@ -386,7 +386,7 @@ class Reject extends Component
                     'reject_status' => $scannedDefectData ? 'defect' : 'mati',
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
-                    'created_by' => Auth::user()->username,
+                    'created_by' => Auth::user()->line_id,
                 ]);
 
                 if ($insertReject) {
@@ -497,7 +497,7 @@ class Reject extends Component
                         'status' => 'NORMAL',
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
-                        'created_by' => Auth::user()->username,
+                        'created_by' => Auth::user()->line_id,
                     ]);
 
                     $success += 1;

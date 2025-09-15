@@ -304,7 +304,7 @@ class DefectUniversal extends Component
                 'defect_area_x' => $this->defectAreaPositionX,
                 'defect_area_y' => $this->defectAreaPositionY,
                 'status' => 'NORMAL',
-                'created_by' => Auth::user()->username,
+                'created_by' => Auth::user()->line_id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
             ]);
@@ -397,7 +397,7 @@ class DefectUniversal extends Component
                         'sizeInputText' => $sizeInputText,
                         'noCutInput' => $noCutInput,
                         'masterPlanId' => $masterPlanId,
-                        'created_by' => Auth::user()->username,
+                        'created_by' => Auth::user()->line_id,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()
                     ]);
@@ -439,7 +439,7 @@ class DefectUniversal extends Component
                         'defect_area_x' => $this->defectAreaPositionX,
                         'defect_area_y' => $this->defectAreaPositionY,
                         'status' => 'NORMAL',
-                        'created_by' => Auth::user()->username,
+                        'created_by' => Auth::user()->line_id,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()
                     ]);

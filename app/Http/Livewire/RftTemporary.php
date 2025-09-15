@@ -129,7 +129,7 @@ class RftTemporary extends Component
                 'no_cut_size' => $this->noCutInput,
                 'kode_numbering' => $this->numberingInput,
                 'status' => 'NORMAL',
-                'created_by' => Auth::user()->username,
+                'created_by' => Auth::user()->line_id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
             ]);
@@ -221,7 +221,7 @@ class RftTemporary extends Component
                         'no_cut_size' => $numberingData->no_cut_size,
                         'kode_numbering' => $this->rapidRft[$i]['numberingInput'],
                         'status' => 'NORMAL',
-                        'created_by' => Auth::user()->username,
+                        'created_by' => Auth::user()->line_id,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()
                     ]);
