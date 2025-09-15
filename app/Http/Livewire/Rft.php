@@ -206,7 +206,7 @@ class Rft extends Component
                                 $this->emit('alert', 'error', "Terjadi kesalahan. Output tidak berhasil direkam.");
                             }
                         } else {
-                            $this->emit('alert', 'error', "PO tidak ditemukan untuk size ".$this->sizeInputText.". (ID SO : ".$this->sizeInput.")");
+                            $this->emit('alert', 'error', "PO tidak ditemukan untuk size <b>".$this->sizeInputText."</b> (ID SO : <b>".$this->sizeInput."</b>)");
                         }
                     } else {
                         $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
