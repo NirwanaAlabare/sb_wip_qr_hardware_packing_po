@@ -11,6 +11,7 @@ use App\Models\SignalBit\Rft as RftModel;
 // use App\Models\SignalBit\EndlineOutput;
 use App\Models\Nds\Numbering;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use DB;
 
@@ -212,7 +213,7 @@ class Rft extends Component
                         $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
                     }
                 } else {
-                    $this->emit('alert', 'error', "Output dari <b>QC</b> tidak ditemukan.");
+                    $this->emit('alert', 'error', "Output dari <b>QC Finishing</b> tidak ditemukan.");
                 }
             } else {
                 $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");

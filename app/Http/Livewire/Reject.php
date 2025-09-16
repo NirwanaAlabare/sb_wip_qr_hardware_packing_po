@@ -289,7 +289,7 @@ class Reject extends Component
                         $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
                     }
                 } else {
-                    $this->emit('alert', 'error', "Output dari <b>QC</b> tidak ditemukan.");
+                    $this->emit('alert', 'error', "Output dari <b>QC Finishing</b> tidak ditemukan.");
                 }
             }
         }
