@@ -174,37 +174,61 @@ class Rft extends Component
                     $currentData = $this->orderWsDetailSizes->where('so_det_id', $this->sizeInput)->first();
                     if ($currentData && $this->orderInfo && ($currentData['color'] == $this->orderInfo->color)) {
 
+                        // $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                        //         ppic_master_so.id
+                        //     ")
+                        //     ->where('ppic_master_so.po', $this->selectedPo)
+                        //     ->where('ppic_master_so.id_so_det', $this->sizeInput)
+                        //     ->first();
                         $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
-                                ppic_master_so.id
+                                ppic_master_so.id,
+                                ppic_master_so.po,
+                                ppic_master_so.id_so_det,
+                                so_det.size,
+                                ppic_master_so.qty_po,
+                                COUNT(output_rfts_packing_po.id) as qty_output
                             ")
+                            ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
+                            ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+                            ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
+                            ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
+                            ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+                            ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
+                            ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                            ->where('so_det.cancel', '!=', 'Y')
                             ->where('ppic_master_so.po', $this->selectedPo)
                             ->where('ppic_master_so.id_so_det', $this->sizeInput)
+                            ->groupBy('ppic_master_so.id')
                             ->first();
 
                         if ($currentPo) {
-                            $insertRft = RftModel::create([
-                                'master_plan_id' => $this->orderInfo->id,
-                                'so_det_id' => $this->sizeInput,
-                                'no_cut_size' => $this->noCutInput,
-                                'po_id' => $currentPo->id,
-                                'kode_numbering' => $numberingInput,
-                                'status' => 'NORMAL',
-                                'created_by' => Auth::user()->line_id,
-                                'created_at' => Carbon::now(),
-                                'updated_at' => Carbon::now()
-                            ]);
+                            if ($currentPo->qty_output < $currentPo->qty_po) {
+                                $insertRft = RftModel::create([
+                                    'master_plan_id' => $this->orderInfo->id,
+                                    'so_det_id' => $this->sizeInput,
+                                    'no_cut_size' => $this->noCutInput,
+                                    'po_id' => $currentPo->id,
+                                    'kode_numbering' => $numberingInput,
+                                    'status' => 'NORMAL',
+                                    'created_by' => Auth::user()->line_id,
+                                    'created_at' => Carbon::now(),
+                                    'updated_at' => Carbon::now()
+                                ]);
 
-                            if ($insertRft) {
-                                $this->emit('alert', 'success', "1 output berukuran ".$this->sizeInputText." berhasil terekam.");
+                                if ($insertRft) {
+                                    $this->emit('alert', 'success', "1 output berukuran ".$this->sizeInputText." berhasil terekam.");
 
-                                $this->sizeInput = '';
-                                $this->sizeInputText = '';
-                                $this->noCutInput = '';
-                                $this->numberingInput = '';
+                                    $this->sizeInput = '';
+                                    $this->sizeInputText = '';
+                                    $this->noCutInput = '';
+                                    $this->numberingInput = '';
 
-                                $this->emit('getPoSizeQty');
+                                    $this->emit('getPoSizeQty');
+                                } else {
+                                    $this->emit('alert', 'error', "Terjadi kesalahan. Output tidak berhasil direkam.");
+                                }
                             } else {
-                                $this->emit('alert', 'error', "Terjadi kesalahan. Output tidak berhasil direkam.");
+                                $this->emit('alert', 'error', "QTY <b>Output</b> tidak dapat melebihi QTY <b>PO</b>.");
                             }
                         } else {
                             $this->emit('alert', 'error', "PO tidak ditemukan untuk size <b>".$this->sizeInputText."</b> (ID SO : <b>".$this->sizeInput."</b>)");
