@@ -5,22 +5,19 @@ namespace App\Models\SignalBit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Rft extends Model
+class OutputGudangStok extends Model
 {
     use HasFactory;
 
     protected $connection = 'mysql_sb';
 
-    protected $table = 'output_rfts_packing_po';
+    protected $table = 'output_gudang_stok';
 
     protected $fillable = [
         'id',
-        'master_plan_id',
-        'so_det_id',
-        'po_id',
-        'no_cut_size',
         'kode_numbering',
-        'status',
+        'so_det_id',
+        'packing_po_id',
         'created_by',
         'created_by_username',
         'created_by_line',

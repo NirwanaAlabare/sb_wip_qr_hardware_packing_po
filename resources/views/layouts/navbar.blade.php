@@ -37,7 +37,7 @@
                                 <span>{{ strtoupper(substr(str_replace("_", " ", Auth::user()->username), 0, 7)).(strlen(str_replace("_", " ", Auth::user()->username)) > 7 ? '...' : '') }}</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#profile"><i class="fa-regular fa-gear"></i> {{ strtoupper(Auth::user()->FullName) }}</a></li>
+                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#profile"><i class="fa-regular fa-gear"></i> {{ strtoupper(Auth::user()->username) }}</a></li>
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#battery"><i class="fa-regular fa-battery"></i> Battery Check</a></li>
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#history"><i class="fa-regular fa-clock-rotate-left"></i> Latest Output</a></li>
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#undo"><i class="fa-regular fa-trash"></i> Latest Undo</a></li>

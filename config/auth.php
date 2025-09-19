@@ -15,7 +15,7 @@ return [
 
     'defaults' => [
         'guard' => 'web',
-        'passwords' => 'userpasswords',
+        'passwords' => 'usersbwip',
     ],
 
     /*
@@ -38,7 +38,7 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'userpasswords',
+            'provider' => 'usersbwip',
         ],
     ],
 
@@ -73,6 +73,11 @@ return [
         'userpasswords' => [
             'driver' => 'eloquent',
             'model' => App\Models\SignalBit\UserPassword::class,
+        ],
+
+        'usersbwip' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\SignalBit\UserSbWip::class,
         ]
     ],
 

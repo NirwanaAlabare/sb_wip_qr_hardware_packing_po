@@ -13,7 +13,7 @@
                     <div class="mb-3">
                         <div class="input-group">
                             <span class="input-group-text">Nama Line</span>
-                            <input type="text" class="form-control fs-6" id="full-name" name="full_name" value="{{ Auth::user()->FullName }}" disabled>
+                            <input type="text" class="form-control fs-6" id="full-name" name="full_name" value="{{ Auth::user()->username }}" disabled>
                         </div>
                     </div>
                     {{-- <div class="mb-3">

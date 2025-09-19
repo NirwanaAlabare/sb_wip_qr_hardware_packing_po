@@ -81,6 +81,11 @@
                 </div>
             </div>
         </div>
+        @if (Auth::user()->line_type == 'multi')
+            <div class="d-flex justify-content-center">
+                <span class="badge text-bg-success mt-1 mb-0">{{ strtoupper($orderInfo->sewing_line) }}</span>
+            </div>
+        @endif
     </div>
 
     {{-- Production Panels --}}
@@ -373,21 +378,21 @@
             getPo();
         });
 
-        window.addEventListener("focus", () => {
-            document.getElementById("loading").classList.remove("d-none");
+        // window.addEventListener("focus", () => {
+        //     document.getElementById("loading").classList.remove("d-none");
 
-            $('#scannedItemRft').attr("disabled", true);
-            $('#scannedDefectItem').attr("disabled", true);
-            $('#scannedRejectItem').attr("disabled", true);
-            $('#scannedReworkItem').attr("disabled", true);
+        //     $('#scannedItemRft').attr("disabled", true);
+        //     $('#scannedDefectItem').attr("disabled", true);
+        //     $('#scannedRejectItem').attr("disabled", true);
+        //     $('#scannedReworkItem').attr("disabled", true);
 
-            restrictYesterdayMasterPlan();
+        //     restrictYesterdayMasterPlan();
 
-            // $('#defect-modal').modal("hide");
-            // $('#reject-modal').modal("hide");
+        //     // $('#defect-modal').modal("hide");
+        //     // $('#reject-modal').modal("hide");
 
-            Livewire.emit('updateOrder');
-        });
+        //     Livewire.emit('updateOrder');
+        // });
 
         // Pad 2 Digits
         function pad(n) {
@@ -572,6 +577,7 @@
                 type: "get",
                 url: "{{ route('get-po-size-qty') }}",
                 data: {
+                    po: $("#product-po").val(),
                     po_id: $("#product-po-id").val(),
                 },
                 dataType: "json",

@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\SignalBit\OutputGudangStok;
 use Livewire\Component;
 use Illuminate\Session\SessionManager;
 use App\Models\SignalBit\Rft as RftModel;
@@ -201,21 +202,34 @@ class Rft extends Component
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
-                        if ($currentPo) {
-                            if ($currentPo->qty_output < $currentPo->qty_po) {
+                        if ($this->selectedPo == "GUDANG_STOK" || $currentPo) {
+                            if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
                                 $insertRft = RftModel::create([
                                     'master_plan_id' => $this->orderInfo->id,
                                     'so_det_id' => $this->sizeInput,
                                     'no_cut_size' => $this->noCutInput,
-                                    'po_id' => $currentPo->id,
+                                    'po_id' => $currentPo ? $currentPo->id : NULL,
                                     'kode_numbering' => $numberingInput,
                                     'status' => 'NORMAL',
-                                    'created_by' => Auth::user()->line_id,
+                                    'created_by' => Auth::user()->id,
+                                    'created_by_username' => Auth::user()->username,
+                                    'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
                                     'created_at' => Carbon::now(),
                                     'updated_at' => Carbon::now()
                                 ]);
 
                                 if ($insertRft) {
+                                    if ($this->selectedPo == "GUDANG_STOK") {
+                                        OutputGudangStok::create([
+                                            'kode_numbering' => $numberingInput,
+                                            'so_det_id' => $this->sizeInput,
+                                            'packing_po_id' => $insertRft->id,
+                                            'created_by' => Auth::user()->id,
+                                            'created_by_username' => Auth::user()->username,
+                                            'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
+                                        ]);
+                                    }
+
                                     $this->emit('alert', 'success', "1 output berukuran ".$this->sizeInputText." berhasil terekam.");
 
                                     $this->sizeInput = '';

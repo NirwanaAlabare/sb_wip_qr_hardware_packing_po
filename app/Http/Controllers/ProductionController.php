@@ -87,57 +87,97 @@ class ProductionController extends Controller
             ->groupBy('ppic_master_so.po')
             ->get();
 
+        if (Auth::user()->line_type == "multi") {
+            $orderWsDetailsPo->push((object)[
+                'po' => 'GUDANG_STOK',
+            ]);
+        }
+
         return json_encode($orderWsDetailsPo);
     }
 
     public function getPoSize(Request $request)
     {
-        $orderWsDetailsPoSize = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
-                ppic_master_so.id,
-                ppic_master_so.po,
-                ppic_master_so.id_so_det,
-                COALESCE(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN so_det.dest ELSE '' END)) as size,
-                ppic_master_so.qty_po,
-                COUNT(output_rfts_packing_po.id) as qty
-            ")
-            ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
-            ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
-            ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
-            ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
-            ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
-            ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
-            ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
-            ->where('so_det.cancel', '!=', 'Y')
-            ->where('ppic_master_so.po', $request->po)
-            ->where('act_costing.kpno', $request->ws_number)
-            ->where('so_det.color', $request->color)
-            ->groupBy('ppic_master_so.id')
-            ->orderBy('so_det.id')
-            ->get();
+        if ($request->po == "GUDANG_STOK") {
+            $orderWsDetailsPoSize = DB::table("so_det")->selectRaw("
+                    so_det.id as id,
+                    '-' as po,
+                    so_det.id as id_so_det,
+                    COALESCE(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN so_det.dest ELSE '' END)) as size,
+                    '-' as qty_po,
+                    COUNT(output_gudang_stok.id) as qty
+                ")
+                ->leftJoin('so', 'so.id', '=', 'so_det.id_so')
+                ->leftJoin('act_costing', 'act_costing.id', '=', 'so.id_cost')
+                ->leftJoin('output_gudang_stok', 'output_gudang_stok.so_det_id', '=', 'so_det.id')
+                ->where('so_det.cancel', '!=', 'Y')
+                ->where('act_costing.kpno', $request->ws_number)
+                ->where('so_det.color', $request->color)
+                ->groupBy('so_det.id')
+                ->get();
+        } else {
+            $orderWsDetailsPoSize = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                    ppic_master_so.id,
+                    ppic_master_so.po,
+                    ppic_master_so.id_so_det,
+                    COALESCE(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN so_det.dest ELSE '' END)) as size,
+                    ppic_master_so.qty_po,
+                    COUNT(output_rfts_packing_po.id) as qty
+                ")
+                ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
+                ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+                ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
+                ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
+                ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+                ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
+                ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                ->where('so_det.cancel', '!=', 'Y')
+                ->where('ppic_master_so.po', $request->po)
+                ->where('act_costing.kpno', $request->ws_number)
+                ->where('so_det.color', $request->color)
+                ->groupBy('ppic_master_so.id')
+                ->orderBy('so_det.id')
+                ->get();
+        }
 
         return json_encode($orderWsDetailsPoSize);
     }
 
     public function getPoSizeQty(Request $request)
     {
-        $orderWsDetailsPoSizeQty = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
-                ppic_master_so.po,
-                ppic_master_so.id_so_det,
-                so_det.size,
-                ppic_master_so.qty_po,
-                COUNT(output_rfts_packing_po.id) as qty_output
-            ")
-            ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
-            ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
-            ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
-            ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
-            ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
-            ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
-            ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
-            ->where('so_det.cancel', '!=', 'Y')
-            ->where('ppic_master_so.id', $request->po_id)
-            ->groupBy('ppic_master_so.po', 'ppic_master_so.id_so_det', 'so_det.size')
-            ->first();
+        if ($request->po == "GUDANG_STOK") {
+            $orderWsDetailsPoSizeQty = DB::table("so_det")->selectRaw("
+                    '-' as po,
+                    so_det.id as id_so_det,
+                    so_det.size,
+                    '-' as qty_po,
+                    COUNT(output_gudang_stok.id) as qty_output
+                ")
+                ->leftJoin('output_gudang_stok', 'output_gudang_stok.so_det_id', '=', 'so_det.id')
+                ->where('so_det.cancel', '!=', 'Y')
+                ->where('so_det.id', $request->po_id)
+                ->groupBy('so_det.id')
+                ->first();
+        } else {
+            $orderWsDetailsPoSizeQty = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                    ppic_master_so.po,
+                    ppic_master_so.id_so_det,
+                    so_det.size,
+                    ppic_master_so.qty_po,
+                    COUNT(output_rfts_packing_po.id) as qty_output
+                ")
+                ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
+                ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+                ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
+                ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
+                ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+                ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
+                ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                ->where('so_det.cancel', '!=', 'Y')
+                ->where('ppic_master_so.id', $request->po_id)
+                ->groupBy('ppic_master_so.po', 'ppic_master_so.id_so_det', 'so_det.size')
+                ->first();
+        }
 
         return json_encode($orderWsDetailsPoSizeQty);
     }
