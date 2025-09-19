@@ -106,7 +106,24 @@ class OrderList extends Component
             }
         }
 
-        $masterPlanBefore = MasterPlan::selectRaw("MAX(id) id")->whereRaw("(".$lineFilter." OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."')")->where("master_plan.cancel", "N")->where("tgl_plan", "<", $this->date)->groupBy("master_plan.sewing_line", "master_plan.id_ws", "master_plan.color")->orderBy("tgl_plan", "desc")->limit(5)->get();
+        $masterPlanBefore = MasterPlan::selectRaw("MAX(id) id")->
+            whereRaw("(".$lineFilter." OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."')")->
+            where("master_plan.cancel", "N")->
+            where("tgl_plan", "<", $this->date)->
+            whereRaw("
+                (
+                    master_plan.color LIKE '%".$this->search."%'
+                    OR
+                    master_plan.sewing_line LIKE '%".$this->search."%'
+                    OR
+                    REPLACE(master_plan.sewing_line, '_', ' ') LIKE '%".$this->search."%'
+                )
+            ")->
+            groupBy("master_plan.sewing_line", "master_plan.id_ws", "master_plan.color")->orderBy("tgl_plan", "desc")->
+            orderBy("sewing_line", "asc")->
+            orderBy("tgl_plan", "desc")->
+            limit(33)->
+            get();
 
         $additionalQuery = "";
         if ($masterPlanBefore) {
