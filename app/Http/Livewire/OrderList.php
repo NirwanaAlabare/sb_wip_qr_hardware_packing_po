@@ -37,14 +37,14 @@ class OrderList extends Component
         $this->date = date('Y-m-d');
         $this->baseUrl = url('/');
 
-        $this->filterLine = str_replace("_", " ", Auth::user()->line->username);
+        $this->filterLine = '';
         // $this->lines = UserPassword::where('Groupp', 'SEWING')->get();
         // $this->buyer = DB::table('mastersupplier')->where('tipe_sup', 'C')->get();
     }
 
     public function clearFilter()
     {
-        $this->filterLine = str_replace("_", " ", Auth::user()->line->username);
+        $this->filterLine = '';
         $this->filterBuyer = '';
         $this->filterWs = '';
         $this->filterProductType = '';
@@ -107,9 +107,9 @@ class OrderList extends Component
         }
 
         $masterPlanBefore = MasterPlan::selectRaw("MAX(id) id")->
-            whereRaw("(".$lineFilter." OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."')")->
+            whereRaw("(".$lineFilter." ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "").")")->
             where("master_plan.cancel", "N")->
-            where("tgl_plan", "<", $this->date)->
+            where("tgl_plan", "<=", $this->date)->
             whereRaw("
                 (
                     master_plan.color LIKE '%".$this->search."%'
@@ -119,10 +119,10 @@ class OrderList extends Component
                     REPLACE(master_plan.sewing_line, '_', ' ') LIKE '%".$this->search."%'
                 )
             ")->
-            groupBy("master_plan.sewing_line", "master_plan.id_ws", "master_plan.color")->orderBy("tgl_plan", "desc")->
-            orderBy("sewing_line", "asc")->
+            groupBy("master_plan.sewing_line", "master_plan.id_ws", "master_plan.color")->
             orderBy("tgl_plan", "desc")->
-            limit(33)->
+            orderBy("sewing_line", "asc")->
+            limit(100)->
             get();
 
         $additionalQuery = "";
@@ -192,7 +192,7 @@ class OrderList extends Component
                         left join
                             output_rfts_packing_po on output_rfts_packing_po.master_plan_id = master_plan.id
                         where
-                            (".$lineFilter." OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."') AND
+                            (".$lineFilter." ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "")." ) AND
                             DATE(output_rfts_packing_po.updated_at) = '".$this->date."' AND
                             (master_plan.tgl_plan = '".$this->date."' $additionalQuery) AND
                             master_plan.cancel = 'N'
@@ -222,7 +222,7 @@ class OrderList extends Component
                         left join
                             output_rfts_packing on output_rfts_packing.master_plan_id = master_plan.id
                         where
-                            (".$lineFilter." OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."') AND
+                            (".$lineFilter." ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "")." ) AND
                             (master_plan.tgl_plan = '".$this->date."' $additionalQuery) AND
                             master_plan.cancel = 'N'
                         group by
@@ -240,7 +240,7 @@ class OrderList extends Component
             ->where('so_det.cancel', 'N')
             ->where('master_plan.cancel', 'N')
             ->whereRaw("
-                (".$lineFilter." OR master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."') AND
+                (".$lineFilter." ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "").") AND
                 master_plan.tgl_plan = '".$this->date."'
                 ".$additionalQuery."
             ")
