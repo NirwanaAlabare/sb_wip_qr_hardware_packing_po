@@ -2,7 +2,7 @@
     <div class="d-flex gap-1">
         <div class="input-group mb-3">
             <input type="hidden" wire:model='date'>
-            <input type="text" class="form-control" wire:model='search' placeholder="Search Order...">
+            <input type="text" class="form-control" wire:model.lazy='search' placeholder="Search Order...">
             <button class="btn btn-success" type="button" id="button-search-order"><i class="fa-regular fa-magnifying-glass"></i></button>
         </div>
         <button class="btn btn-outline-success mb-3" type="button" wire:click="preSubmitFilter" id="filter-button"><i class="fa-regular fa-filter"></i></button>
@@ -116,7 +116,7 @@
                     <form>
                         <div class="mb-3">
                             <label class="form-label">Line</label>
-                            <div wire:ignore id="select-line-container">
+                            <div wire:ignore.self id="select-line-container">
                                 <select class="form-select @error('filterLine') is-invalid @enderror" id="line-select2" wire:model='filterLine'>
                                     <option value="" selected>Select Line</option>
                                     @foreach ($orderFilters->groupBy('sewing_line') as $order)
@@ -129,7 +129,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Buyer</label>
-                            <div wire:ignore id="select-buyer-container">
+                            <div wire:ignore.self id="select-buyer-container">
                                 <select class="form-select @error('filterBuyer') is-invalid @enderror" id="buyer-select2" wire:model='filterBuyer'>
                                     <option value="" selected>Select Buyer</option>
                                     @foreach ($orderFilters->groupBy('buyer_name') as $order)
@@ -142,7 +142,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">No. WS</label>
-                            <div wire:ignore id="select-ws-container">
+                            <div wire:ignore.self id="select-ws-container">
                                 <select class="form-select @error('filterWs') is-invalid @enderror" id="ws-select2" wire:model='filterWs'>
                                     <option value="" selected>Select No. WS</option>
                                     @foreach ($orderFilters->groupBy('ws_number') as $order)
@@ -153,9 +153,9 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 d-none">
                             <label class="form-label">Product Type</label>
-                            <div wire:ignore id="select-product-type-container">
+                            <div wire:ignore.self id="select-product-type-container">
                                 <select class="form-select @error('filterProductType') is-invalid @enderror" id="product-type-select2" wire:model='filterProductType'>
                                     <option value="" selected>Select Product Type</option>
                                     @foreach ($orderFilters->groupBy('product_type') as $order)
@@ -168,7 +168,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Style</label>
-                            <div wire:ignore id="select-style-container">
+                            <div wire:ignore.self id="select-style-container">
                                 <select class="form-select @error('filterStyle') is-invalid @enderror" id="style-select2" wire:model='filterStyle'>
                                     <option value="" selected>Select Style</option>
                                     @foreach ($orderFilters->groupBy('style_name') as $order)
