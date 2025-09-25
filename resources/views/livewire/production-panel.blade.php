@@ -71,11 +71,11 @@
                         </div>
                         <div class="col-md-4 mb-1" wire:ignore>
                             <label class="form-label mb-0">QTY PO</label>
-                            <input class="form-control form-control-sm" id="product-po-qty"  />
+                            <input class="form-control form-control-sm" id="product-po-qty" readonly />
                         </div>
                         <div class="col-md-4 mb-1" wire:ignore>
                             <label class="form-label mb-0">QTY OUTPUT</label>
-                            <input class="form-control form-control-sm" id="product-po-output"  />
+                            <input class="form-control form-control-sm" id="product-po-output" readonly />
                         </div>
                     </div>
                 </div>
