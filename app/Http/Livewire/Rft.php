@@ -211,6 +211,7 @@ class Rft extends Component
                                     'po_id' => $currentPo ? $currentPo->id : NULL,
                                     'kode_numbering' => $numberingInput,
                                     'status' => 'NORMAL',
+                                    'alokasi' => $currentPo ? "po" : "gudang stok",
                                     'created_by' => Auth::user()->id,
                                     'created_by_username' => Auth::user()->username,
                                     'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
@@ -323,10 +324,11 @@ class Rft extends Component
                         array_push($rapidRftFiltered, [
                             'master_plan_id' => $this->orderInfo->id,
                             'so_det_id' => $numberingData->so_det_id,
-                            'po_id' => $currentPo->id,
+                            'po_id' => $currentPo ? $currentPo->id : NULL,
                             'no_cut_size' => $numberingData->no_cut_size,
                             'kode_numbering' => $this->rapidRft[$i]['numberingInput'],
                             'status' => 'NORMAL',
+                            'alokasi' => ($currentPo ? 'po' : 'gudang stok'),
                             'created_by' => Auth::user()->line_id,
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now()

@@ -20,6 +20,7 @@ class Rft extends Model
         'po_id',
         'no_cut_size',
         'kode_numbering',
+        'alokasi',
         'status',
         'created_by',
         'created_by_username',
