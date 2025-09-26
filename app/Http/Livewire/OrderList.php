@@ -219,7 +219,6 @@ class OrderList extends Component
                             output_rfts_packing_po on output_rfts_packing_po.master_plan_id = master_plan.id
                         where
                             (".$lineFilter." ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "")." ) AND
-                            DATE(output_rfts_packing_po.updated_at) = '".$this->date."' AND
                             (master_plan.tgl_plan = '".$this->date."' $additionalQuery) AND
                             master_plan.cancel = 'N'
                         group by
