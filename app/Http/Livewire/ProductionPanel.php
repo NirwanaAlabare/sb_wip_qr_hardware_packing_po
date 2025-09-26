@@ -230,7 +230,14 @@ class ProductionPanel extends Component
                         'so_det_id' => $getRft->so_det_id,
                         'po_id' => $getRft->po_id,
                         'output_rft_id' => $getRft->id,
+                        'alokasi' => $getRft->alokasi,
                         'keterangan' => 'rft',
+                        'created_by' => $getRft->created_by,
+                        'created_by_username' => $getRft->created_by_username,
+                        'created_by_line' => $getRft->created_by_line,
+                        'created_at' => $getRft->created_at,
+                        'updated_at' => $getRft->updated_at,
+                        'undo_by' => Auth::user()->id
                     ]);
                 }
 

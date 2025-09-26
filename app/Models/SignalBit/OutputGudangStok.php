@@ -29,9 +29,4 @@ class OutputGudangStok extends Model
     {
         return $this->belongsTo(MasterPlan::class, 'master_plan_id', 'id');
     }
-
-    public function undo()
-    {
-        return $this->hasOne(Undo::class, 'output_rft_id', 'id');
-    }
 }
