@@ -154,6 +154,7 @@ class ProductionController extends Controller
                     COUNT(output_gudang_stok.id) as qty_output
                 ")
                 ->leftJoin('output_gudang_stok', 'output_gudang_stok.so_det_id', '=', 'so_det.id')
+                ->whereNotNull('output_gudang_stok.packing_po_id')
                 ->where('so_det.cancel', '!=', 'Y')
                 ->where('so_det.id', $request->po_id)
                 ->groupBy('so_det.id')
