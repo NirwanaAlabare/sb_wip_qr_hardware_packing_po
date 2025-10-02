@@ -145,7 +145,50 @@ class OrderList extends Component
         if ($masterPlanBefore) {
             $masterPlanBeforeIds = implode("' , '", $masterPlanBefore->pluck("id")->toArray());
 
-            $additionalQuery = " OR master_plan.id IN ('".$masterPlanBeforeIds."') ";
+            $additionalQuery .= " OR master_plan.id IN ('".$masterPlanBeforeIds."') ";
+        }
+
+        // With Today Output
+        $masterPlanWithOutput = MasterPlan::selectRaw("MAX(master_plan.id) id")->
+            leftJoin("act_costing", "act_costing.id", "=", "master_plan.id_ws")->
+            leftJoin("mastersupplier", "mastersupplier.Id_Supplier", "=", "act_costing.id_buyer")->
+            leftJoin(DB::raw("(select master_plan_id, count(output_rfts_packing_po.id) as total from output_rfts_packing_po where updated_at BETWEEN '".$this->date." 00:00:00' and '".$this->date." 23:59:59' group by master_plan_id) as output"), "output.master_plan_id", "=", "master_plan.id")->
+            whereRaw("
+                (
+                    ".$lineFilter."
+                    ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "")."
+                    ".($this->filterBuyer ? "AND mastersupplier.supplier = '".$this->filterBuyer."'" : "")."
+                    ".($this->filterWs ? "AND act_costing.kpno = '".$this->filterWs."'" : "")."
+                    ".($this->filterStyle ? "AND act_costing.styleno = '".$this->filterStyle."'" : "")."
+                )
+            ")->
+            where("master_plan.cancel", "N")->
+            where("tgl_plan", "<", $this->date)->
+            where("output.total", ">", 0)->
+            whereRaw("
+                (
+                    act_costing.kpno LIKE '%".$this->search."%'
+                    OR
+                    mastersupplier.supplier LIKE '%".$this->search."%'
+                    OR
+                    act_costing.styleno LIKE '%".$this->search."%'
+                    OR
+                    master_plan.color LIKE '%".$this->search."%'
+                    OR
+                    master_plan.sewing_line LIKE '%".$this->search."%'
+                    OR
+                    REPLACE(master_plan.sewing_line, '_', ' ') LIKE '%".$this->search."%'
+                )
+            ")->
+            groupBy("master_plan.sewing_line", "master_plan.id_ws", "master_plan.color", "master_plan.tgl_plan")->
+            orderBy("tgl_plan", "desc")->
+            orderBy("sewing_line", "asc")->
+            get();
+
+        if ($masterPlanWithOutput) {
+            $masterPlanWithOutputIds = implode("' , '", $masterPlanWithOutput->pluck("id")->toArray());
+
+            $additionalQuery .= " OR master_plan.id IN ('".$masterPlanWithOutputIds."') ";
         }
 
         $this->orderFilters = DB::table('master_plan')
@@ -303,6 +346,8 @@ class OrderList extends Component
                 'so.id'
             )
             ->orderBy('master_plan.tgl_plan', 'desc')
+            ->orderBy('master_plan.sewing_line', 'asc')
+            ->orderBy('master_plan.id_ws', 'desc')
             ->get();
 
         $this->temporaryOutput = TemporaryOutput::where("line_id", Auth::user()->line_id)->

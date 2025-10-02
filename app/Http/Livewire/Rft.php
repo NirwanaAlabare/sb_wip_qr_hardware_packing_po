@@ -174,7 +174,8 @@ class Rft extends Component
                 if ($finishlineOutputData) {
                     $currentData = $this->orderWsDetailSizes->where('so_det_id', $this->sizeInput)->first();
                     if ($currentData && $this->orderInfo && ($currentData['color'] == $this->orderInfo->color)) {
-
+                        $currentSizeInput = $this->sizeInput;
+                        $currentSizeInputText = $this->sizeInputText;
                         // $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
                         //         ppic_master_so.id
                         //     ")
@@ -198,7 +199,7 @@ class Rft extends Component
                             ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
                             ->where('so_det.cancel', '!=', 'Y')
                             ->where('ppic_master_so.po', $this->selectedPo)
-                            ->where('ppic_master_so.id_so_det', $this->sizeInput)
+                            ->where('ppic_master_so.id_so_det', $currentSizeInput)
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
@@ -206,7 +207,7 @@ class Rft extends Component
                             if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
                                 $insertRft = RftModel::create([
                                     'master_plan_id' => $this->orderInfo->id,
-                                    'so_det_id' => $this->sizeInput,
+                                    'so_det_id' => $currentSizeInput,
                                     'no_cut_size' => $this->noCutInput,
                                     'po_id' => $currentPo ? $currentPo->id : NULL,
                                     'kode_numbering' => $numberingInput,
@@ -223,7 +224,7 @@ class Rft extends Component
                                     if ($this->selectedPo == "GUDANG_STOK") {
                                         OutputGudangStok::create([
                                             'kode_numbering' => $numberingInput,
-                                            'so_det_id' => $this->sizeInput,
+                                            'so_det_id' => $currentSizeInput,
                                             'packing_po_id' => $insertRft->id,
                                             'created_by' => Auth::user()->id,
                                             'created_by_username' => Auth::user()->username,
@@ -231,7 +232,7 @@ class Rft extends Component
                                         ]);
                                     }
 
-                                    $this->emit('alert', 'success', "1 output berukuran ".$this->sizeInputText." berhasil terekam.");
+                                    $this->emit('alert', 'success', "1 output berukuran ".$currentSizeInputText." berhasil terekam.");
 
                                     $this->sizeInput = '';
                                     $this->sizeInputText = '';
@@ -246,7 +247,7 @@ class Rft extends Component
                                 $this->emit('alert', 'error', "QTY <b>Output</b> tidak dapat melebihi QTY <b>PO</b>.");
                             }
                         } else {
-                            $this->emit('alert', 'error', "PO tidak ditemukan untuk size <b>".$this->sizeInputText."</b> (ID SO : <b>".$this->sizeInput."</b>)");
+                            $this->emit('alert', 'error', "PO tidak ditemukan untuk size <b>".$currentSizeInputText."</b> (ID SO : <b>".$currentSizeInput."</b>)");
                         }
                     } else {
                         $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
