@@ -57,8 +57,8 @@
                             <div class="col-md-4">
                                 <div class="bg-rft text-white w-100 h-100 py-auto rounded-3 d-flex flex-column justify-content-center align-items-center">
                                     <p class="fs-3 mb-0">{{ $key }}</p>
-                                    {{-- @if ($order->dest != "-" && $order->dest != null)
-                                        <p class="fs-6 mb-0">{{ $order->dest }}</p>
+                                    {{-- @if ($order->first()->dest != "-" && $order->first()->dest != null)
+                                        <p class="fs-6 mb-0">{{ $order->first()->dest }}</p>
                                     @endif --}}
                                     <p class="fs-5 mb-0">{{ $rft->where('size', $key)->sum('output') }}</p>
                                 </div>

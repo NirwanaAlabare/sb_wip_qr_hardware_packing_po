@@ -154,11 +154,17 @@ class Rft extends Component
             // }
 
             // One Straight Format
-            $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $numberingInput)->first();
+            $numberingData = DB::connection("mysql_nds")->table("year_sequence")->
+                selectRaw("year_sequence.*, so_det.dest, so_det.color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
+                leftJoin("signalbit_erp.so_det", "so_det.id", "=", "year_sequence.so_det_id")->
+                leftJoin("signalbit_erp.so", "so.id", "=", "so_det.id_so")->
+                leftJoin("signalbit_erp.act_costing", "act_costing.id", "=", "so.id_cost")->
+                where("id_year_sequence", $numberingInput)->
+                first();
 
             if ($numberingData) {
                 $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
+                $this->sizeInputText = $numberingData->size.($numberingData->dest ? " - ".$numberingData->dest : "");
                 $this->noCutInput = $numberingData->no_cut_size;
                 $this->numberingInput = $numberingInput;
 
@@ -172,7 +178,7 @@ class Rft extends Component
                 // $finishlineOutputData = true;
 
                 if ($finishlineOutputData) {
-                    $currentData = $this->orderWsDetailSizes->where('so_det_id', $this->sizeInput)->first();
+                    $currentData = $this->orderWsDetailSizes->where('id_ws', $numberingData->id_ws)->where('color', $numberingData->color)->where('size', $numberingData->size)->first();
                     if ($currentData && $this->orderInfo && ($currentData['color'] == $this->orderInfo->color)) {
                         $currentSizeInput = $this->sizeInput;
                         $currentSizeInputText = $this->sizeInputText;
@@ -198,16 +204,43 @@ class Rft extends Component
                             ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
                             ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
                             ->where('so_det.cancel', '!=', 'Y')
-                            ->where('ppic_master_so.po', $this->selectedPo)
-                            ->where('ppic_master_so.id_so_det', $currentSizeInput)
+                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
+                            ->where('so_det.color', $numberingData->color) // By Size & Color
+                            ->where('so_det.size', $numberingData->size) // By Size & Color
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
                         if ($this->selectedPo == "GUDANG_STOK" || $currentPo) {
                             if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
+
+                                // Modify based on selected PO
+                                if ($currentPo && $currentPo->id_so_det != $numberingData->so_det_id) {
+                                    $id = (int) $currentPo->id_so_det;
+                                    $num = addslashes($numberingInput);
+                                    $numId = (int) $numberingData->id;
+
+                                    // SB Data Update
+                                    $sql = "
+                                        UPDATE output_rfts              SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_defects           SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_rejects           SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_rfts_packing      SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_defects_packing   SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_rejects_packing   SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_reject_in         SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                    ";
+                                    DB::unprepared($sql);
+
+                                    // NDS Data Update
+                                    DB::connection('mysql_nds')->unprepared("
+                                        UPDATE output_rfts_packing SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE year_sequence        SET so_det_id = {$id} WHERE id = {$numId};
+                                    ");
+                                }
+
                                 $insertRft = RftModel::create([
                                     'master_plan_id' => $this->orderInfo->id,
-                                    'so_det_id' => $currentSizeInput,
+                                    'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,
                                     'no_cut_size' => $this->noCutInput,
                                     'po_id' => $currentPo ? $currentPo->id : NULL,
                                     'kode_numbering' => $numberingInput,
@@ -224,7 +257,7 @@ class Rft extends Component
                                     if ($this->selectedPo == "GUDANG_STOK") {
                                         OutputGudangStok::create([
                                             'kode_numbering' => $numberingInput,
-                                            'so_det_id' => $currentSizeInput,
+                                            'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,
                                             'packing_po_id' => $insertRft->id,
                                             'created_by' => Auth::user()->id,
                                             'created_by_username' => Auth::user()->username,

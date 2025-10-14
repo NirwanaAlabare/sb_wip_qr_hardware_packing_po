@@ -103,7 +103,7 @@ class ProductionController extends Controller
                     so_det.id as id,
                     '-' as po,
                     so_det.id as id_so_det,
-                    COALESCE(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN so_det.dest ELSE '' END)) as size,
+                    CONCAT(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN CONCAT(' - ', so_det.dest) ELSE '' END)) as size,
                     '-' as qty_po,
                     COUNT(output_gudang_stok.id) as qty
                 ")
@@ -120,7 +120,7 @@ class ProductionController extends Controller
                     ppic_master_so.id,
                     ppic_master_so.po,
                     ppic_master_so.id_so_det,
-                    COALESCE(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN so_det.dest ELSE '' END)) as size,
+                    CONCAT(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN CONCAT(' - ', so_det.dest) ELSE '' END)) as size,
                     ppic_master_so.qty_po,
                     COUNT(output_rfts_packing_po.id) as qty
                 ")
