@@ -136,6 +136,7 @@ class ProductionPanel extends Component
 
         $this->orderWsDetailSizes = DB::table('master_plan')->selectRaw("
                 MIN(so_det.id) as so_det_id,
+                act_costing.id as id_ws,
                 so_det.color as color,
                 so_det.size as size,
                 so_det.dest as dest,
@@ -400,7 +401,6 @@ class ProductionPanel extends Component
             ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
             ->leftJoin('master_size_new', 'master_size_new.size', '=', 'so_det.size')
             ->leftJoin('masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
-            ->where('so_det.cancel', 'N')
             ->where('master_plan.id', $this->selectedColor)
             ->first();
 
@@ -422,7 +422,6 @@ class ProductionPanel extends Component
             ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
             ->leftJoin('master_size_new', 'master_size_new.size', '=', 'so_det.size')
             ->leftJoin('masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
-            ->where('so_det.cancel', '!=', 'Y')
             ->where('master_plan.cancel', '!=', 'Y')
             ->where('master_plan.sewing_line', str_replace(" ", "_", $this->orderInfo->sewing_line))
             ->where('act_costing.kpno', $this->orderInfo->ws_number)
@@ -438,6 +437,7 @@ class ProductionPanel extends Component
 
         $this->orderWsDetailSizes = DB::table('master_plan')->selectRaw("
                 MIN(so_det.id) as so_det_id,
+                act_costing.id as id_ws,
                 so_det.color as color,
                 so_det.size as size,
                 so_det.dest as dest,
