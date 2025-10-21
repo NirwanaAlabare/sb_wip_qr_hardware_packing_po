@@ -8,10 +8,10 @@ use Illuminate\Session\SessionManager;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SignalBit\Reject as RejectModel;
 use App\Models\SignalBit\Rft;
-use App\Models\SignalBit\Defect;
 use App\Models\SignalBit\DefectType;
 use App\Models\SignalBit\DefectArea;
 use App\Models\SignalBit\MasterPlan;
+use App\Models\SignalBit\OutputGudangStok;
 use App\Models\Nds\Numbering;
 use Carbon\Carbon;
 use Validator;
@@ -25,6 +25,7 @@ class Reject extends Component
 
     public $orderInfo;
     public $orderWsDetailSizes;
+    public $selectedPo;
     public $sizeInput;
     public $sizeInputText;
     public $noCutInput;
@@ -34,21 +35,21 @@ class Reject extends Component
     public $rapidReject;
     public $rapidRejectCount;
 
-    public $searchDefect;
+    public $searchRejectIn;
     public $searchReject;
-    public $defectImage;
-    public $defectPositionX;
-    public $defectPositionY;
-    public $allDefectListFilter;
-    public $allDefectImage;
-    public $allDefectPosition;
+    public $rejectImage;
+    public $rejectPositionX;
+    public $rejectPositionY;
+    public $allRejectListFilter;
+    public $allRejectImage;
+    public $allRejectPosition;
     public $massQty;
     public $massSize;
-    public $massDefectType;
-    public $massDefectTypeName;
-    public $massDefectArea;
-    public $massDefectAreaName;
-    public $massSelectedDefect;
+    public $massRejectType;
+    public $massRejectTypeName;
+    public $massRejectArea;
+    public $massRejectAreaName;
+    public $massSelectedReject;
     public $info;
 
     public $defectTypes;
@@ -63,10 +64,10 @@ class Reject extends Component
         'noCutInput' => 'required',
         'numberingInput' => 'required',
 
-        'rejectType' => 'required',
-        'rejectArea' => 'required',
-        'rejectAreaPositionX' => 'required',
-        'rejectAreaPositionY' => 'required',
+        // 'rejectType' => 'required',
+        // 'rejectArea' => 'required',
+        // 'rejectAreaPositionX' => 'required',
+        // 'rejectAreaPositionY' => 'required',
     ];
 
     protected $messages = [
@@ -74,24 +75,24 @@ class Reject extends Component
         'noCutInput.required' => 'Harap scan qr.',
         'numberingInput.required' => 'Harap scan qr.',
 
-        'rejectType.required' => 'Harap tentukan jenis reject.',
-        'rejectArea.required' => 'Harap tentukan area reject.',
-        'rejectAreaPositionX.required' => "Harap tentukan posisi reject area dengan mengklik tombol 'gambar' di samping 'select product type'.",
-        'rejectAreaPositionY.required' => "Harap tentukan posisi reject area dengan mengklik tombol 'gambar' di samping 'select product type'.",
+        // 'rejectType.required' => 'Harap tentukan jenis reject.',
+        // 'rejectArea.required' => 'Harap tentukan area reject.',
+        // 'rejectAreaPositionX.required' => "Harap tentukan posisi reject area dengan mengklik tombol 'gambar' di samping 'select product type'.",
+        // 'rejectAreaPositionY.required' => "Harap tentukan posisi reject area dengan mengklik tombol 'gambar' di samping 'select product type'.",
     ];
 
     protected $listeners = [
         'updateWsDetailSizes' => 'updateWsDetailSizes',
+        'updatePo' => 'updatePo',
         'updateOutputReject' => 'updateOutput',
         'setAndSubmitInputReject' => 'setAndSubmitInput',
         'toInputPanel' => 'resetError',
 
         'submitInputReject' => 'submitInput',
-        'submitReject' => 'submitReject',
-        'submitAllReject' => 'submitAllReject',
-        'cancelReject' => 'cancelReject',
+        // 'submitReject' => 'submitReject',
+        // 'submitAllReject' => 'submitAllReject',
+        // 'cancelReject' => 'cancelReject',
         'hideDefectAreaImageClear' => 'hideDefectAreaImage',
-        'updateWsDetailSizes' => 'updateWsDetailSizes',
 
         'setRejectAreaPosition' => 'setRejectAreaPosition',
         'clearInput' => 'clearInput'
@@ -125,15 +126,17 @@ class Reject extends Component
 
     private function checkIfNumberingExists($numberingInput = null): bool
     {
-        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->exists()) {
+        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "rft")->exists()) {
             $this->addError('numberingInput', 'Kode QR sudah discan di RFT.');
             return true;
         }
 
-        if (DB::table('output_rejects_packing')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->exists()) {
+        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "reject")->exists()) {
             $this->addError('numberingInput', 'Kode QR sudah discan di Reject.');
             return true;
         }
+
+        $this->emit('qrInputFocus', 'reject');
 
         return false;
     }
@@ -162,10 +165,15 @@ class Reject extends Component
         }
     }
 
+    public function updatePo($po)
+    {
+        $this->selectedPo = $po;
+    }
+
     public function updateOutput()
     {
         // Reject
-        $this->reject = collect(DB::select("select output_rejects_packing.*, so_det.size, COUNT(output_rejects_packing.id) output from `output_rejects_packing` left join `so_det` on `so_det`.`id` = `output_rejects_packing`.`so_det_id` where `master_plan_id` = '".$this->orderInfo->id."' and `status` = 'NORMAL' group by so_det.id"));
+        $this->reject = collect(DB::select("select output_rfts_packing_po.*, so_det.size, COUNT(output_rfts_packing_po.id) output from `output_rfts_packing_po` left join `so_det` on `so_det`.`id` = `output_rfts_packing_po`.`so_det_id` where `master_plan_id` = '".$this->orderInfo->id."' and `type` = 'reject' group by so_det.id"));
     }
 
     public function clearInput()
@@ -192,9 +200,117 @@ class Reject extends Component
         $this->rejectAreaPositionY = $y;
     }
 
-    public function preSubmitInput($value)
+    // Deprecated
+        // public function preSubmitInput($value)
+        // {
+        //     $this->emit('qrInputFocus', 'reject');
+
+        //     $numberingInput = $value;
+
+        //     if ($numberingInput) {
+        //         // if (str_contains($numberingInput, 'WIP')) {
+        //         //     $numberingData = DB::connection("mysql_nds")->table("stocker_numbering")->where("kode", $numberingInput)->first();
+        //         // } else {
+        //         //     $numberingCodes = explode('_', $numberingInput);
+
+        //         //     if (count($numberingCodes) > 2) {
+        //         //         $numberingInput = substr($numberingCodes[0],0,4)."_".$numberingCodes[1]."_".$numberingCodes[2];
+        //         //         $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $numberingInput)->first();
+        //         //     } else {
+        //         //         $numberingData = DB::connection("mysql_nds")->table("month_count")->selectRaw("month_count.*, month_count.id_month_year no_cut_size")->where("id_month_year", $numberingInput)->first();
+        //         //     }
+        //         // }
+
+        //         // One Straight Format
+        //         $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $numberingInput)->first();
+
+        //         if ($numberingData) {
+        //             $this->sizeInput = $numberingData->so_det_id;
+        //             $this->sizeInputText = $numberingData->size;
+        //             $this->noCutInput = $numberingData->no_cut_size;
+        //             $this->numberingInput = $numberingInput;
+        //         }
+        //     }
+
+        //     $validation = Validator::make([
+        //         'sizeInput' => $this->sizeInput,
+        //         'noCutInput' => $this->noCutInput,
+        //         'numberingInput' => $numberingInput
+        //     ], [
+        //         'sizeInput' => 'required',
+        //         'noCutInput' => 'required',
+        //         'numberingInput' => 'required'
+        //     ], [
+        //         'sizeInput.required' => 'Harap scan qr.',
+        //         'noCutInput.required' => 'Harap scan qr.',
+        //         'numberingInput.required' => 'Harap scan qr.',
+        //     ]);
+
+        //     if ($this->checkIfNumberingExists($numberingInput)) {
+        //         $this->emit('qrInputFocus', 'reject');
+
+        //         return;
+        //     }
+
+        //     if ($validation->fails()) {
+        //         $this->emit('qrInputFocus', 'reject');
+
+        //         $validation->validate();
+        //     } else {
+        //         // Check current reject
+        //         $currentReject = null;
+        //         $currentRejectType = null;
+
+        //         $finishlineRejectData = DB::connection('mysql_sb')->table('output_rejects_packing')->where("kode_numbering", $numberingInput)->first();
+        //         if ($finishlineRejectData) {
+        //             $currentReject = $finishlineRejectData;
+
+        //             $currentRejectType = 'packing';
+        //         } else {
+        //             $finishlineOutputData = DB::connection('mysql_sb')->table('output_rfts_packing')->where("kode_numbering", $numberingInput)->first();
+        //             $finishlineDefectData = DB::connection('mysql_sb')->table('output_defects_packing')->where("kode_numbering", $numberingInput)->first();
+
+        //             if (!$finishlineOutputData && !$finishlineDefectData) {
+        //                 $endlineRejectData = DB::connection('mysql_sb')->table('output_rejects')->where("kode_numbering", $numberingInput)->first();
+
+        //                 if ($endlineRejectData) {
+        //                     $currentReject = $endlineRejectData;
+
+        //                     $currentRejectType = 'qc';
+        //                 }
+        //             }
+        //         }
+
+        //         if ($currentReject) {
+        //             if ($this->orderWsDetailSizes->where('so_det_id', $this->sizeInput)->count() > 0) {
+        //                 $this->emit('clearSelectRejectAreaPoint');
+
+        //                 $this->rejectType = null;
+        //                 $this->rejectArea = null;
+        //                 $this->rejectAreaPositionX = null;
+        //                 $this->rejectAreaPositionY = null;
+
+        //                 $this->numberingInput = $numberingInput;
+
+        //                 $this->validateOnly('sizeInput');
+
+        //                 $this->emit('showModal', 'reject', 'regular');
+        //             } else {
+        //                 $this->emit('qrInputFocus', 'reject');
+
+        //                 $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
+        //             }
+        //         } else {
+        //             $this->emit('alert', 'error', "Reject dari <b>".($currentRejectType == 'packing' ? "QC Finishing" : strtoupper($currentRejectType))."</b> tidak ditemukan.");
+        //         }
+        //     }
+        // }
+
+    public function submitInput($value)
     {
-        $this->emit('qrInputFocus', 'reject');
+        ini_set('memory_limit', '2048M');
+
+        $this->emit('qrInputFocus', 'rft');
 
         $numberingInput = $value;
 
@@ -213,201 +329,170 @@ class Reject extends Component
             // }
 
             // One Straight Format
-            $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $numberingInput)->first();
+            $numberingData = DB::connection("mysql_nds")->table("year_sequence")->
+                selectRaw("year_sequence.*, so_det.dest, so_det.color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
+                leftJoin("signalbit_erp.so_det", "so_det.id", "=", "year_sequence.so_det_id")->
+                leftJoin("signalbit_erp.so", "so.id", "=", "so_det.id_so")->
+                leftJoin("signalbit_erp.act_costing", "act_costing.id", "=", "so.id_cost")->
+                where("id_year_sequence", $numberingInput)->
+                first();
 
             if ($numberingData) {
                 $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
+                $this->sizeInputText = $numberingData->size.($numberingData->dest ? " - ".$numberingData->dest : "");
                 $this->noCutInput = $numberingData->no_cut_size;
                 $this->numberingInput = $numberingInput;
-            }
-        }
 
-        $scannedDefectData = Defect::where("kode_numbering", $numberingInput)->first();
+                $validatedData = $this->validate();
 
-        // check defect
-        if ($scannedDefectData) {
-            if ($scannedDefectData->defect_status == "defect") {
-                $this->rejectType = $scannedDefectData->defect_type_id;
-                $this->rejectArea = $scannedDefectData->defect_area_id;
-                $this->rejectAreaPositionX = $scannedDefectData->defect_area_x;
-                $this->rejectAreaPositionY = $scannedDefectData->defect_area_y;
+                if ($this->checkIfNumberingExists($numberingInput)) {
+                    return;
+                }
 
-                $this->numberingInput = $numberingInput;
+                $currentReject = null;
+                $currentRejectType = null;
 
-                $this->emit('loadingStart');
+                $finishlineRejectData = DB::connection('mysql_sb')->table('output_rejects_packing')->where("kode_numbering", $this->numberingInput)->first();
+                if ($finishlineRejectData) {
+                    $currentReject = $finishlineRejectData;
 
-                $this->emitSelf('submitInputReject');
-            } else {
-                $this->emit('qrInputFocus', 'reject');
+                    $currentRejectType = 'packing';
+                } else {
+                    $finishlineOutputData = DB::connection('mysql_sb')->table('output_rfts_packing')->where("kode_numbering", $this->numberingInput)->first();
+                    $finishlineDefectData = DB::connection('mysql_sb')->table('output_defects_packing')->where("kode_numbering", $this->numberingInput)->first();
 
-                $this->emit('alert', 'warning', "Kode qr sudah discan di REWORK.");
-            }
-        } else {
-            $validation = Validator::make([
-                'sizeInput' => $this->sizeInput,
-                'noCutInput' => $this->noCutInput,
-                'numberingInput' => $numberingInput
-            ], [
-                'sizeInput' => 'required',
-                'noCutInput' => 'required',
-                'numberingInput' => 'required'
-            ], [
-                'sizeInput.required' => 'Harap scan qr.',
-                'noCutInput.required' => 'Harap scan qr.',
-                'numberingInput.required' => 'Harap scan qr.',
-            ]);
+                    if (!$finishlineOutputData && !$finishlineDefectData) {
+                        $endlineRejectData = DB::connection('mysql_sb')->table('output_rejects')->where("kode_numbering", $this->numberingInput)->first();
 
-            if ($this->checkIfNumberingExists($numberingInput)) {
-                return;
-            }
+                        if ($endlineRejectData) {
+                            $currentReject = $endlineRejectData;
 
-            if ($validation->fails()) {
-                $this->emit('qrInputFocus', 'reject');
+                            $currentRejectType = 'qc';
+                        }
+                    }
+                }
 
-                $validation->validate();
-            } else {
-                $endlineOutputData = DB::connection('mysql_sb')->table('output_rfts')->where("kode_numbering", $numberingInput)->first();
+                if ($currentReject) {
+                    $currentData = $this->orderWsDetailSizes->where('id_ws', $numberingData->id_ws)->where('color', $numberingData->color)->where('size', $numberingData->size)->first();
+                    if ($currentData && $this->orderInfo && ($currentData['color'] == $this->orderInfo->color)) {
+                        $currentSizeInput = $this->sizeInput;
+                        $currentSizeInputText = $this->sizeInputText;
+                        // $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                        //         ppic_master_so.id
+                        //     ")
+                        //     ->where('ppic_master_so.po', $this->selectedPo)
+                        //     ->where('ppic_master_so.id_so_det', $this->sizeInput)
+                        //     ->first();
+                        $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                                ppic_master_so.id,
+                                ppic_master_so.po,
+                                ppic_master_so.id_so_det,
+                                so_det.size,
+                                ppic_master_so.qty_po,
+                                COUNT(output_rfts_packing_po.id) as qty_output
+                            ")
+                            ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
+                            ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+                            ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
+                            ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
+                            ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+                            ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
+                            ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                            ->where('so_det.cancel', '!=', 'Y')
+                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
+                            ->where('so_det.color', $numberingData->color) // By Size & Color
+                            ->where('so_det.size', $numberingData->size) // By Size & Color
+                            ->groupBy('ppic_master_so.id')
+                            ->first();
 
-                if ($endlineOutputData) {
-                    if ($this->orderWsDetailSizes->where('so_det_id', $this->sizeInput)->count() > 0) {
-                        $this->emit('clearSelectRejectAreaPoint');
+                        if ($this->selectedPo == "GUDANG_STOK" || $currentPo) {
+                            if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
 
-                        $this->rejectType = null;
-                        $this->rejectArea = null;
-                        $this->rejectAreaPositionX = null;
-                        $this->rejectAreaPositionY = null;
+                                // Modify based on selected PO
+                                if ($currentPo && $currentPo->id_so_det != $numberingData->so_det_id) {
+                                    $id = (int) $currentPo->id_so_det;
+                                    $num = addslashes($numberingInput);
+                                    $numId = (int) $numberingData->id;
 
-                        $this->numberingInput = $numberingInput;
+                                    // SB Data Update
+                                    $sql = "
+                                        UPDATE output_rfts              SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_defects           SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_rejects           SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_rfts_packing      SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_defects_packing   SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_rejects_packing   SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE output_reject_in         SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                    ";
+                                    DB::unprepared($sql);
 
-                        $this->validateOnly('sizeInput');
+                                    // NDS Data Update
+                                    DB::connection('mysql_nds')->unprepared("
+                                        UPDATE output_rfts_packing SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
+                                        UPDATE year_sequence       SET so_det_id = {$id} WHERE id = {$numId};
+                                    ");
+                                }
 
-                        $this->emit('showModal', 'reject', 'regular');
+                                $insertReject = Rft::create([
+                                    'master_plan_id' => $this->orderInfo->id,
+                                    'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,
+                                    'no_cut_size' => $this->noCutInput,
+                                    'po_id' => $currentPo ? $currentPo->id : NULL,
+                                    'kode_numbering' => $numberingInput,
+                                    'status' => $currentReject ? $currentReject->reject_status : "NORMAL",
+                                    'alokasi' => $currentPo ? "po" : "gudang stok",
+                                    'reject_id' => $currentReject ? $currentReject->id : NULL,
+                                    'type' => 'reject',
+                                    'department' => $currentRejectType,
+                                    'created_by' => Auth::user()->id,
+                                    'created_by_username' => Auth::user()->username,
+                                    'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
+                                    'created_at' => Carbon::now(),
+                                    'updated_at' => Carbon::now()
+                                ]);
+
+                                if ($insertReject) {
+                                    if ($this->selectedPo == "GUDANG_STOK") {
+                                        OutputGudangStok::create([
+                                            'kode_numbering' => $numberingInput,
+                                            'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,
+                                            'packing_po_id' => $insertReject->id,
+                                            'type' => 'reject',
+                                            'created_by' => Auth::user()->id,
+                                            'created_by_username' => Auth::user()->username,
+                                            'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
+                                        ]);
+                                    }
+
+                                    $this->emit('alert', 'success', "1 output berukuran ".$currentSizeInputText." berhasil terekam.");
+
+                                    $this->sizeInput = '';
+                                    $this->sizeInputText = '';
+                                    $this->noCutInput = '';
+                                    $this->numberingInput = '';
+
+                                    $this->emit('getPoSizeQty');
+                                } else {
+                                    $this->emit('alert', 'error', "Terjadi kesalahan. Output tidak berhasil direkam.");
+                                }
+                            } else {
+                                $this->emit('alert', 'error', "QTY <b>Output</b> tidak dapat melebihi QTY <b>PO</b>.");
+                            }
+                        } else {
+                            $this->emit('alert', 'error', "PO tidak ditemukan untuk size <b>".$currentSizeInputText."</b> (ID SO : <b>".$currentSizeInput."</b>)");
+                        }
                     } else {
-                        $this->emit('qrInputFocus', 'reject');
-
                         $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
                     }
                 } else {
                     $this->emit('alert', 'error', "Output dari <b>QC Finishing</b> tidak ditemukan.");
                 }
-            }
-        }
-    }
-
-    public function submitInput()
-    {
-        $this->emit('qrInputFocus', 'reject');
-
-        if ($this->numberingInput) {
-            // if (str_contains($this->numberingInput, 'WIP')) {
-            //     $numberingData = DB::connection("mysql_nds")->table("stocker_numbering")->where("kode", $this->numberingInput)->first();
-            // } else {
-            //     $numberingCodes = explode('_', $this->numberingInput);
-
-            //     if (count($numberingCodes) > 2) {
-            //         $this->numberingInput = substr($numberingCodes[0],0,4)."_".$numberingCodes[1]."_".$numberingCodes[2];
-            //         $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $this->numberingInput)->first();
-            //     } else {
-            //         $numberingData = DB::connection("mysql_nds")->table("month_count")->selectRaw("month_count.*, month_count.id_month_year no_cut_size")->where("id_month_year", $this->numberingInput)->first();
-            //     }
-            // }
-
-            // One Straight Format
-            $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $this->numberingInput)->first();
-
-            if ($numberingData) {
-                $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
-                $this->noCutInput = $numberingData->no_cut_size;
-            }
-        }
-
-        $validatedData = $this->validate();
-
-        if ($this->checkIfNumberingExists()) {
-            return;
-        }
-
-        if ($this->orderWsDetailSizes->where('so_det_id', $this->sizeInput)->count() > 0) {
-            $continue = false;
-
-            $scannedDefectData = Defect::selectRaw("output_defects_packing.*, master_plan.sewing_line, master_plan.tgl_plan, master_plan.color, output_defect_in_out.status in_out_status")->
-                leftJoin("output_defect_in_out", function ($join) {
-                    $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
-                    $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
-                })->
-                leftJoin("master_plan", "master_plan.id", "=", "output_defects_packing.master_plan_id")->
-                where("output_defects_packing.kode_numbering", $this->numberingInput)->first();
-
-            // check defect
-            if ($scannedDefectData) {
-                if ($scannedDefectData->master_plan_id == $this->orderInfo->id) {
-                    if ($scannedDefectData->defect_status == "defect") {
-                        $scannedDefectData->defect_status = "rejected";
-                        $scannedDefectData->save();
-
-                        $continue = true;
-                    } else {
-                        $continue = false;
-
-                        $this->emit('alert', 'error', "Data DEFECT sudah : <b>'".$scannedDefectData->defect_status."'</b>)");
-                    }
-                } else {
-                    $continue = false;
-
-                    $this->emit('alert', 'error', "Data DEFECT berada di Plan lain (<b>ID :".$scannedDefectData->master_plan_id."/".$scannedDefectData->tgl_plan."/".$scannedDefectData->color."/".strtoupper(str_replace("_", " ", $scannedDefectData->sewing_line))."</b>)");
-                }
             } else {
-                $endlineOutputData = DB::connection('mysql_sb')->table('output_rfts')->where("kode_numbering", $this->numberingInput)->first();
-
-                if ($endlineOutputData) {
-                    $continue = true;
-                } else {
-                    $continue = false;
-
-                    $this->emit('alert', 'error', "Data tidak ditemukan di QC");
-                }
-            }
-
-            // continue
-            if ($continue) {
-                $insertReject = RejectModel::create([
-                    'master_plan_id' => $this->orderInfo->id,
-                    'so_det_id' => $this->sizeInput,
-                    'no_cut_size' => $this->noCutInput,
-                    'kode_numbering' => $this->numberingInput,
-                    "defect_id" => $scannedDefectData ? $scannedDefectData->id : null,
-                    'status' => 'NORMAL',
-                    'reject_type_id' => $scannedDefectData ? $scannedDefectData->defect_type_id : $this->rejectType,
-                    'reject_area_id' => $scannedDefectData ? $scannedDefectData->defect_area_id : $this->rejectArea,
-                    'reject_area_x' => $scannedDefectData ? $scannedDefectData->defect_area_x : $this->rejectAreaPositionX,
-                    'reject_area_y' => $scannedDefectData ? $scannedDefectData->defect_area_y : $this->rejectAreaPositionY,
-                    'reject_status' => $scannedDefectData ? 'defect' : 'mati',
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'created_by' => Auth::user()->line_id,
-                ]);
-
-                if ($insertReject) {
-                    $this->emit('alert', 'success', "1 output berukuran ".$this->sizeInputText." berhasil terekam.");
-                    $this->emit('hideModal', 'reject', 'regular');
-
-                    $this->sizeInput = '';
-                    $this->sizeInputText = '';
-                    $this->noCutInput = '';
-                    $this->numberingInput = '';
-                } else {
-                    $this->emit('alert', 'error', "Terjadi kesalahan. Output tidak berhasil direkam.");
-                }
-            } else {
-                $this->emit('alert', 'warning', "QR Sudah discan.");
+                $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
             }
         } else {
             $this->emit('alert', 'error', "Terjadi kesalahan. QR tidak sesuai.");
         }
-
-        $this->emit('qrInputFocus', 'reject');
     }
 
     public function setAndSubmitInput($scannedNumbering, $scannedSize, $scannedSizeText) {
@@ -415,56 +500,46 @@ class Reject extends Component
         $this->sizeInput = $scannedSize;
         $this->sizeInputText = $scannedSizeText;
 
-        $this->preSubmitInput($scannedNumbering);
+        $this->submitInput($scannedNumbering);
     }
 
     public function pushRapidReject($numberingInput, $sizeInput, $sizeInputText) {
         $exist = false;
 
-        if (count($this->rapidReject) < 100) {
-            foreach ($this->rapidReject as $item) {
-                if (($numberingInput && $item['numberingInput'] == $numberingInput)) {
-                    $exist = true;
-                }
+        foreach ($this->rapidReject as $item) {
+            if (($numberingInput && $item['numberingInput'] == $numberingInput)) {
+                $exist = true;
             }
+        }
 
-            if (!$exist) {
-                if ($numberingInput) {
-                    $this->rapidRejectCount += 1;
+        if (!$exist) {
+            $this->rapidRejectCount += 1;
 
-                    array_push($this->rapidReject, [
-                        'numberingInput' => $numberingInput,
-                    ]);
-                }
+            if ($numberingInput) {
+                array_push($this->rapidReject, [
+                    'numberingInput' => $numberingInput,
+                ]);
             }
-        } else {
-            $this->emit('alert', 'error', "Anda sudah mencapai batas rapid scan. Harap klik selesai dahulu.");
         }
     }
 
-    public function preSubmitRapidInput()
-    {
-        $this->rejectType = null;
-        $this->rejectArea = null;
-        $this->rejectAreaPositionX = null;
-        $this->rejectAreaPositionY = null;
-
-        $this->emit('showModal', 'reject', 'rapid');
-    }
-
     public function submitRapidInput() {
+        ini_set('memory_limit', '2048M');
+
         $rapidRejectFiltered = [];
+        $rapidRejectFilteredNds = [];
         $success = 0;
         $fail = 0;
 
         if ($this->rapidReject && count($this->rapidReject) > 0) {
+
             for ($i = 0; $i < count($this->rapidReject); $i++) {
                 // if (str_contains($this->rapidReject[$i]['numberingInput'], 'WIP')) {
                 //     $numberingData = DB::connection("mysql_nds")->table("stocker_numbering")->where("kode", $this->rapidReject[$i]['numberingInput'])->first();
                 // } else {
                 //     $numberingCodes = explode('_', $this->rapidReject[$i]['numberingInput']);
 
-                //     if (count($numberingCodes) > 1) {
+                //     if (count($numberingCodes) > 2) {
                 //         $this->rapidReject[$i]['numberingInput'] = substr($numberingCodes[0],0,4)."_".$numberingCodes[1]."_".$numberingCodes[2];
                 //         $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $this->rapidReject[$i]['numberingInput'])->first();
                 //     } else {
@@ -475,47 +550,85 @@ class Reject extends Component
                 // One Straight Format
                 $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $this->rapidReject[$i]['numberingInput'])->first();
 
-                if (((DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count()) < 1) && ($this->orderWsDetailSizes->where('so_det_id', $numberingData->so_det_id)->count() > 0)) {
-                    $scannedDefectData = Defect::where("defect_status", "defect")->where("kode_numbering", $this->rapidReject[$i]['numberingInput'])->first();
+                $currentReject = null;
+                $currentRejectType = null;
 
-                    if ($scannedDefectData) {
-                        $scannedDefectData->defect_status = 'rejected';
-                        $scannedDefectData->save();
+                $finishlineRejectData = DB::connection('mysql_sb')->table('output_rejects_packing')->where("kode_numbering", $this->numberingInput)->first();
+                if ($finishlineRejectData) {
+                    $currentReject = $finishlineRejectData;
+
+                    $currentRejectType = 'packing';
+                } else {
+                    $finishlineOutputData = DB::connection('mysql_sb')->table('output_rfts_packing')->where("kode_numbering", $this->numberingInput)->first();
+                    $finishlineDefectData = DB::connection('mysql_sb')->table('output_defects_packing')->where("kode_numbering", $this->numberingInput)->first();
+
+                    if (!$finishlineOutputData && !$finishlineDefectData) {
+                        $endlineRejectData = DB::connection('mysql_sb')->table('output_rejects')->where("kode_numbering", $this->numberingInput)->first();
+
+                        if ($endlineRejectData) {
+                            $currentReject = $endlineRejectData;
+
+                            $currentRejectType = 'qc';
+                        }
                     }
+                }
 
-                    array_push($rapidRejectFiltered, [
-                        'master_plan_id' => $this->orderInfo->id,
-                        'so_det_id' => $numberingData->so_det_id,
-                        'no_cut_size' => $numberingData->no_cut_size,
-                        'kode_numbering' => $this->rapidReject[$i]['numberingInput'],
-                        'defect_id' => $scannedDefectData ? $scannedDefectData->id : null,
-                        'reject_type_id' => $scannedDefectData ? $scannedDefectData->defectType->defect_type_id : $this->rejectType,
-                        'reject_area_id' => $scannedDefectData ? $scannedDefectData->defectArea->defect_area_id : $this->rejectArea,
-                        'reject_area_x' => $scannedDefectData ? $scannedDefectData->defect_area_x : $this->rejectAreaPositionX,
-                        'reject_area_y' => $scannedDefectData ? $scannedDefectData->defect_area_y : $this->rejectAreaPositionY,
-                        'reject_status' => 'mati',
-                        'status' => 'NORMAL',
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
-                        'created_by' => Auth::user()->line_id,
-                    ]);
+                if ($currentReject) {
+                    $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                                ppic_master_so.id,
+                                ppic_master_so.po,
+                                ppic_master_so.id_so_det,
+                                so_det.size,
+                                ppic_master_so.qty_po,
+                                COUNT(output_rfts_packing_po.id) as qty_output
+                            ")
+                            ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
+                            ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+                            ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
+                            ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
+                            ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+                            ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
+                            ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                            ->where('so_det.cancel', '!=', 'Y')
+                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
+                            ->where('so_det.color', $numberingData->color) // By Size & Color
+                            ->where('so_det.size', $numberingData->size) // By Size & Color
+                            ->groupBy('ppic_master_so.id')
+                            ->first();
 
-                    $success += 1;
+                    if ($currentPo) {
+                        array_push($rapidRejectFiltered, [
+                            'master_plan_id' => $this->orderInfo->id,
+                            'so_det_id' => $currentPo ? $currentPo->id_so_det : $numberingData->so_det_id,
+                            'no_cut_size' => $this->noCutInput,
+                            'po_id' => $currentPo ? $currentPo->id : NULL,
+                            'kode_numbering' => $this->rapidReject[$i]['numberingInput'],
+                            'status' => 'NORMAL',
+                            'alokasi' => $currentPo ? "po" : "gudang stok",
+                            'reject_id' => $currentReject ? $currentReject->id : NULL,
+                            'type' => 'reject',
+                            'department' => $currentRejectType,
+                            'created_by' => Auth::user()->id,
+                            'created_by_username' => Auth::user()->username,
+                            'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now()
+                        ]);
+
+                        $success += 1;
+                    } else {
+                        $fail += 1;
+                    }
                 } else {
                     $fail += 1;
                 }
             }
         }
 
-        $rapidRejectInsert = RejectModel::insert($rapidRejectFiltered);
+        $rapidRejectInsert = Rft::insert($rapidRejectFiltered);
 
-        if ($success > 0) {
-            $this->emit('alert', 'success', $success." output berhasil terekam. ");
-        }
-
-        if ($fail > 0) {
-            $this->emit('alert', 'error', $fail." output gagal terekam.");
-        }
+        $this->emit('alert', 'success', $success." output berhasil terekam. ");
+        $this->emit('alert', 'error', $fail." output gagal terekam.");
 
         $this->rapidReject = [];
         $this->rapidRejectCount = 0;
@@ -528,29 +641,29 @@ class Reject extends Component
 
     public function setDefectAreaPosition($x, $y)
     {
-        $this->defectPositionX = $x;
-        $this->defectPositionY = $y;
+        $this->rejectPositionX = $x;
+        $this->rejectPositionY = $y;
     }
 
-    public function showDefectAreaImage($defectImage, $x, $y)
+    public function showDefectAreaImage($rejectImage, $x, $y)
     {
-        $this->defectImage = $defectImage;
-        $this->defectPositionX = $x;
-        $this->defectPositionY = $y;
+        $this->rejectImage = $rejectImage;
+        $this->rejectPositionX = $x;
+        $this->rejectPositionY = $y;
 
-        $this->emit('showDefectAreaImage', $this->defectImage, $this->defectPositionX, $this->defectPositionY);
+        $this->emit('showDefectAreaImage', $this->rejectImage, $this->rejectPositionX, $this->rejectPositionY);
     }
 
     public function hideDefectAreaImage()
     {
-        $this->defectImage = null;
-        $this->defectPositionX = null;
-        $this->defectPositionY = null;
+        $this->rejectImage = null;
+        $this->rejectPositionX = null;
+        $this->rejectPositionY = null;
     }
 
-    public function updatingSearchDefect()
+    public function updatingSearchRejectIn()
     {
-        $this->resetPage('defectsPage');
+        $this->resetPage('rejectInPage');
     }
 
     public function updatingSearchReject()
@@ -558,217 +671,207 @@ class Reject extends Component
         $this->resetPage('rejectsPage');
     }
 
-    public function submitAllReject() {
-        $availableReject = 0;
-        $externalReject = 0;
+    // Deprecated :
+        // public function submitAllReject() {
+        //     $availableReject = 0;
+        //     $externalReject = 0;
 
-        $allDefect = Defect::selectRaw('output_defects_packing.id id, output_defects_packing.master_plan_id master_plan_id, output_defects_packing.so_det_id so_det_id, output_defects_packing.kode_numbering, output_defects_packing.no_cut_size, output_defect_types.allocation, output_defects_packing.defect_type_id, output_defects_packing.defect_area_id, output_defects_packing.defect_area_x, output_defects_packing.defect_area_y, output_defect_in_out.status in_out_status')->
-            leftJoin('so_det', 'so_det.id', '=', 'output_defects_packing.so_det_id')->
-            leftJoin("output_defect_in_out", function ($join) {
-                $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
-                $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
-            })->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_defects_packing.defect_type_id')->
-            whereNull('output_defects_packing.kode_numbering')->
-            where('output_defects_packing.defect_status', 'defect')->
-            where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
-            get();
+        //     $allDefect = Defect::selectRaw('output_defects_packing.id id, output_defects_packing.master_plan_id master_plan_id, output_defects_packing.so_det_id so_det_id, output_defects_packing.kode_numbering, output_defects_packing.no_cut_size, output_defect_types.allocation, output_defects_packing.defect_type_id, output_defects_packing.defect_area_id, output_defects_packing.defect_area_x, output_defects_packing.defect_area_y, output_defect_in_out.status in_out_status')->
+        //         leftJoin('so_det', 'so_det.id', '=', 'output_defects_packing.so_det_id')->
+        //         leftJoin("output_defect_in_out", function ($join) {
+        //             $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
+        //             $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
+        //         })->
+        //         leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_defects_packing.defect_type_id')->
+        //         whereNull('output_defects_packing.kode_numbering')->
+        //         where('output_defects_packing.defect_status', 'defect')->
+        //         where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
+        //         get();
 
-        if ($allDefect->count() > 0) {
-            $defectIds = [];
-            foreach ($allDefect as $defect) {
-                if ($defect->in_out_status != "defect") {
-                    // create reject
-                    $createReject = RejectModel::create([
-                        "master_plan_id" => $defect->master_plan_id,
-                        "so_det_id" => $defect->so_det_id,
-                        "defect_id" => $defect->id,
-                        "status" => "NORMAL",
-                        "reject_status" => "defect",
-                        'reject_type_id' => $defect->defect_type_id,
-                        'reject_area_id' => $defect->defect_area_id,
-                        'reject_area_x' => $defect->defect_area_x,
-                        'reject_area_y' => $defect->defect_area_y,
-                        "kode_numbering" => $defect->kode_numbering,
-                        "no_cut_size" => $defect->no_cut_size,
-                        'created_by' =>Auth::user()->username
-                    ]);
+        //     if ($allDefect->count() > 0) {
+        //         $defectIds = [];
+        //         foreach ($allDefect as $defect) {
+        //             if ($defect->in_out_status != "defect") {
+        //                 // create reject
+        //                 $createReject = RejectModel::create([
+        //                     "master_plan_id" => $defect->master_plan_id,
+        //                     "so_det_id" => $defect->so_det_id,
+        //                     "defect_id" => $defect->id,
+        //                     "status" => "NORMAL",
+        //                     "reject_status" => "defect",
+        //                     'reject_type_id' => $defect->defect_type_id,
+        //                     'reject_area_id' => $defect->defect_area_id,
+        //                     'reject_area_x' => $defect->defect_area_x,
+        //                     'reject_area_y' => $defect->defect_area_y,
+        //                     "kode_numbering" => $defect->kode_numbering,
+        //                     "no_cut_size" => $defect->no_cut_size,
+        //                     'created_by' =>Auth::user()->username
+        //                 ]);
 
-                    // add defect ids
-                    array_push($defectIds, $defect->id);
+        //                 // add defect ids
+        //                 array_push($defectIds, $defect->id);
 
-                    $availableReject += 1;
-                } else {
-                    $externalReject += 1;
-                }
-            }
-            // update defect
-            $defectSql = Defect::whereIn('id', $defectIds)->update([
-                "defect_status" => "rejected"
-            ]);
+        //                 $availableReject += 1;
+        //             } else {
+        //                 $externalReject += 1;
+        //             }
+        //         }
 
-            if ($availableReject > 0) {
-                $this->emit('alert', 'success', $availableReject." DEFECT berhasil di REJECT");
-            } else {
-                $this->emit('alert', 'error', "Terjadi kesalahan. DEFECT tidak berhasil di REJECT.");
-            }
+        //         if ($availableReject > 0) {
+        //             $this->emit('alert', 'success', $availableReject." DEFECT berhasil di REJECT");
+        //         } else {
+        //             $this->emit('alert', 'error', "Terjadi kesalahan. DEFECT tidak berhasil di REJECT.");
+        //         }
 
-            if ($externalReject > 0) {
-                $this->emit('alert', 'warning', $externalReject." DEFECT masih di proses MANDING/SPOTCLEANING.");
-            }
+        //         if ($externalReject > 0) {
+        //             $this->emit('alert', 'warning', $externalReject." DEFECT masih di proses MANDING/SPOTCLEANING.");
+        //         }
 
-        } else {
-            $this->emit('alert', 'warning', "Data tidak ditemukan.");
-        }
-    }
+        //     } else {
+        //         $this->emit('alert', 'warning', "Data tidak ditemukan.");
+        //     }
+        // }
 
-    public function preSubmitMassReject($defectType, $defectArea, $defectTypeName, $defectAreaName) {
-        $this->massQty = 1;
-        $this->massSize = '';
-        $this->massDefectType = $defectType;
-        $this->massDefectTypeName = $defectTypeName;
-        $this->massDefectArea = $defectArea;
-        $this->massDefectAreaName = $defectAreaName;
+        // public function preSubmitMassReject($defectType, $defectArea, $defectTypeName, $defectAreaName) {
+        //     $this->massQty = 1;
+        //     $this->massSize = '';
+        //     $this->massRejectType = $defectType;
+        //     $this->massRejectTypeName = $defectTypeName;
+        //     $this->massRejectArea = $defectArea;
+        //     $this->massRejectAreaName = $defectAreaName;
 
-        $this->emit('showModal', 'massReject');
-    }
+        //     $this->emit('showModal', 'massReject');
+        // }
 
-    public function submitMassReject() {
-        $availableReject = 0;
-        $externalReject = 0;
+        // public function submitMassReject() {
+        //     $availableReject = 0;
+        //     $externalReject = 0;
 
-        $selectedDefect = Defect::selectRaw('output_defects_packing.id id, output_defects_packing.master_plan_id master_plan_id, output_defects_packing.so_det_id so_det_id, output_defects_packing.kode_numbering, output_defects_packing.no_cut_size, output_defect_types.allocation, output_defects_packing.defect_type_id, output_defects_packing.defect_area_id, output_defects_packing.defect_area_x, output_defects_packing.defect_area_y, so_det.size, output_defect_in_out.status in_out_status')->
-            leftJoin('so_det', 'so_det.id', '=', 'output_defects_packing.so_det_id')->
-            leftJoin("output_defect_in_out", function ($join) {
-                $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
-                $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
-            })->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_defects_packing.defect_type_id')->
-            whereNull('output_defects_packing.kode_numbering')->
-            where('output_defects_packing.defect_status', 'defect')->
-            where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
-            where('output_defects_packing.defect_type_id', $this->massDefectType)->
-            where('output_defects_packing.defect_area_id', $this->massDefectArea)->
-            where('output_defects_packing.so_det_id', $this->massSize)->
-            take($this->massQty)->get();
+        //     $selectedDefect = Defect::selectRaw('output_defects_packing.id id, output_defects_packing.master_plan_id master_plan_id, output_defects_packing.so_det_id so_det_id, output_defects_packing.kode_numbering, output_defects_packing.no_cut_size, output_defect_types.allocation, output_defects_packing.defect_type_id, output_defects_packing.defect_area_id, output_defects_packing.defect_area_x, output_defects_packing.defect_area_y, so_det.size, output_defect_in_out.status in_out_status')->
+        //         leftJoin('so_det', 'so_det.id', '=', 'output_defects_packing.so_det_id')->
+        //         leftJoin("output_defect_in_out", function ($join) {
+        //             $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
+        //             $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
+        //         })->
+        //         leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_defects_packing.defect_type_id')->
+        //         whereNull('output_defects_packing.kode_numbering')->
+        //         where('output_defects_packing.defect_status', 'defect')->
+        //         where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
+        //         where('output_defects_packing.defect_type_id', $this->massRejectType)->
+        //         where('output_defects_packing.defect_area_id', $this->massRejectArea)->
+        //         where('output_defects_packing.so_det_id', $this->massSize)->
+        //         take($this->massQty)->get();
 
-        if ($selectedDefect->count() > 0) {
-            $defectIds = [];
-            foreach ($selectedDefect as $defect) {
-                // if ($defect->in_out_status != "defect") {
-                    // create reject
-                    $createReject = RejectModel::create([
-                        "master_plan_id" => $defect->master_plan_id,
-                        "so_det_id" => $defect->so_det_id,
-                        "defect_id" => $defect->id,
-                        "status" => "NORMAL",
-                        "reject_status" => "defect",
-                        'reject_type_id' => $defect->defect_type_id,
-                        'reject_area_id' => $defect->defect_area_id,
-                        'reject_area_x' => $defect->defect_area_x,
-                        'reject_area_y' => $defect->defect_area_y,
-                        "kode_numbering" => $defect->kode_numbering,
-                        "no_cut_size" => $defect->no_cut_size,
-                        'created_by' =>Auth::user()->username,
-                    ]);
+        //     if ($selectedDefect->count() > 0) {
+        //         $defectIds = [];
+        //         foreach ($selectedDefect as $defect) {
+        //             // if ($defect->in_out_status != "defect") {
+        //                 // create reject
+        //                 $createReject = RejectModel::create([
+        //                     "master_plan_id" => $defect->master_plan_id,
+        //                     "so_det_id" => $defect->so_det_id,
+        //                     "defect_id" => $defect->id,
+        //                     "status" => "NORMAL",
+        //                     "reject_status" => "defect",
+        //                     'reject_type_id' => $defect->defect_type_id,
+        //                     'reject_area_id' => $defect->defect_area_id,
+        //                     'reject_area_x' => $defect->defect_area_x,
+        //                     'reject_area_y' => $defect->defect_area_y,
+        //                     "kode_numbering" => $defect->kode_numbering,
+        //                     "no_cut_size" => $defect->no_cut_size,
+        //                     'created_by' =>Auth::user()->username,
+        //                 ]);
 
-                    // add defect id array
-                    array_push($defectIds, $defect->id);
+        //                 // add defect id array
+        //                 array_push($defectIds, $defect->id);
 
-                    $availableReject += 1;
-                // } else {
-                //     $externalReject += 1;
-                // }
-            }
-            // update defect
-            $defectSql = Defect::whereIn('id', $defectIds)->update([
-                "defect_status" => "rejected"
-            ]);
+        //                 $availableReject += 1;
+        //             // } else {
+        //             //     $externalReject += 1;
+        //             // }
+        //         }
+        //         // update defect
+        //         $defectSql = Defect::whereIn('id', $defectIds)->update([
+        //             "defect_status" => "rejected"
+        //         ]);
 
-            if ($availableReject > 0) {
-                $this->emit('alert', 'success', "DEFECT dengan Ukuran : ".$selectedDefect[0]->size.", Tipe : ".$this->massDefectTypeName." dan Area : ".$this->massDefectAreaName." berhasil di REJECT sebanyak ".$selectedDefect->count()." kali.");
+        //         if ($availableReject > 0) {
+        //             $this->emit('alert', 'success', "DEFECT dengan Ukuran : ".$selectedDefect[0]->size.", Tipe : ".$this->massRejectTypeName." dan Area : ".$this->massRejectAreaName." berhasil di REJECT sebanyak ".$selectedDefect->count()." kali.");
 
-                $this->emit('hideModal', 'massReject');
-            } else {
-                $this->emit('alert', 'error', "Terjadi kesalahan. DEFECT dengan Ukuran : ".$selectedDefect[0]->size.", Tipe : ".$this->massDefectTypeName." dan Area : ".$this->massDefectAreaName." tidak berhasil di REJECT.");
-            }
+        //             $this->emit('hideModal', 'massReject');
+        //         } else {
+        //             $this->emit('alert', 'error', "Terjadi kesalahan. DEFECT dengan Ukuran : ".$selectedDefect[0]->size.", Tipe : ".$this->massRejectTypeName." dan Area : ".$this->massRejectAreaName." tidak berhasil di REJECT.");
+        //         }
 
-            if ($externalReject > 0) {
-                $this->emit('alert', 'warning', $externalReject." DEFECT masih ada yang di proses MENDING/SPOTCLEANING.");
-            }
-        } else {
-            $this->emit('alert', 'warning', "Data tidak ditemukan.");
-        }
-    }
+        //         if ($externalReject > 0) {
+        //             $this->emit('alert', 'warning', $externalReject." DEFECT masih ada yang di proses MENDING/SPOTCLEANING.");
+        //         }
+        //     } else {
+        //         $this->emit('alert', 'warning', "Data tidak ditemukan.");
+        //     }
+        // }
 
-    public function submitReject($defectId) {
-        $externalReject = 0;
+        // public function submitReject($defectId) {
+        //     $externalReject = 0;
 
-        $thisDefectReject = RejectModel::where('defect_id', $defectId)->count();
+        //     $thisDefectReject = RejectModel::where('defect_id', $defectId)->count();
 
-        if ($thisDefectReject < 1) {
-            // get defect
-            $defect = Defect::where('id', $defectId);
-            $getDefect = Defect::selectRaw('output_defects_packing.*, output_defect_in_out.status')->leftJoin("output_defect_in_out", function ($join) {
-                $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
-                $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
-            })->
-            where('output_defects_packing.id', $defectId)->
-            whereNull('output_defects_packing.kode_numbering')->
-            first();
+        //     if ($thisDefectReject < 1) {
+        //         // get defect
+        //         $defect = Defect::where('id', $defectId);
+        //         $getDefect = Defect::selectRaw('output_defects_packing.*, output_defect_in_out.status')->leftJoin("output_defect_in_out", function ($join) {
+        //             $join->on("output_defect_in_out.defect_id", "=", "output_defects_packing.id");
+        //             $join->on("output_defect_in_out.output_type", "=", DB::raw("'packing'"));
+        //         })->
+        //         where('output_defects_packing.id', $defectId)->
+        //         whereNull('output_defects_packing.kode_numbering')->
+        //         first();
 
-            if ($getDefect->status != 'defect') {
-                // remove from defect
-                $updateDefect = $defect->update([
-                    "defect_status" => "rejected"
-                ]);
+        //         if ($getDefect->status != 'defect') {
+        //             // remove from defect
+        //             $updateDefect = $defect->update([
+        //                 "defect_status" => "rejected"
+        //             ]);
 
-                // add to reject
-                $createReject = RejectModel::create([
-                    "master_plan_id" => $getDefect->master_plan_id,
-                    "so_det_id" => $getDefect->so_det_id,
-                    "defect_id" => $defectId,
-                    "reject_status" => 'defect',
-                    'reject_type_id' => $getDefect->defect_type_id,
-                    'reject_area_id' => $getDefect->defect_area_id,
-                    'reject_area_x' => $getDefect->defect_area_x,
-                    'reject_area_y' => $getDefect->defect_area_y,
-                    "kode_numbering" => $getDefect->kode_numbering,
-                    "no_cut_size" => $getDefect->no_cut_size,
-                    'created_by' =>Auth::user()->username,
-                    "status" => "NORMAL"
-                ]);
+        //             // add to reject
+        //             $createReject = RejectModel::create([
+        //                 "master_plan_id" => $getDefect->master_plan_id,
+        //                 "so_det_id" => $getDefect->so_det_id,
+        //                 "defect_id" => $defectId,
+        //                 "reject_status" => 'defect',
+        //                 'reject_type_id' => $getDefect->defect_type_id,
+        //                 'reject_area_id' => $getDefect->defect_area_id,
+        //                 'reject_area_x' => $getDefect->defect_area_x,
+        //                 'reject_area_y' => $getDefect->defect_area_y,
+        //                 "kode_numbering" => $getDefect->kode_numbering,
+        //                 "no_cut_size" => $getDefect->no_cut_size,
+        //                 'created_by' =>Auth::user()->username,
+        //                 "status" => "NORMAL"
+        //             ]);
 
-                if ($createReject && $updateDefect) {
-                    $this->emit('alert', 'success', "DEFECT dengan ID : ".$defectId." berhasil di REJECT.");
-                } else {
-                    $this->emit('alert', 'error', "Terjadi kesalahan. DEFECT dengan ID : ".$defectId." tidak berhasil di REJECT.");
-                }
-            } else {
-                $this->emit('alert', 'error', "DEFECT ini masih di proses MENDING/SPOTCLEANING. DEFECT dengan ID : ".$defectId." tidak berhasil di REJECT.");
-            }
-        } else {
-            $this->emit('alert', 'warning', "Pencegahan data redundant. DEFECT dengan ID : ".$defectId." sudah ada di REJECT.");
-        }
-    }
+        //             if ($createReject && $updateDefect) {
+        //                 $this->emit('alert', 'success', "DEFECT dengan ID : ".$defectId." berhasil di REJECT.");
+        //             } else {
+        //                 $this->emit('alert', 'error', "Terjadi kesalahan. DEFECT dengan ID : ".$defectId." tidak berhasil di REJECT.");
+        //             }
+        //         } else {
+        //             $this->emit('alert', 'error', "DEFECT ini masih di proses MENDING/SPOTCLEANING. DEFECT dengan ID : ".$defectId." tidak berhasil di REJECT.");
+        //         }
+        //     } else {
+        //         $this->emit('alert', 'warning', "Pencegahan data redundant. DEFECT dengan ID : ".$defectId." sudah ada di REJECT.");
+        //     }
+        // }
 
-    public function cancelReject($rejectId, $defectId) {
-        // add to defect
-        $defect = Defect::where('id', $defectId);
-        $getDefect = $defect->first();
-        $updateDefect = $defect->update([
-            "defect_status" => "defect"
-        ]);
+        // public function cancelReject($rejectId) {
+        //     // delete from reject
+        //     $deleteReject = RejectModel::where('id', $rejectId)->delete();
 
-        // delete from reject
-        $deleteReject = RejectModel::where('id', $rejectId)->delete();
-
-        if ($deleteReject && $updateDefect) {
-            $this->emit('alert', 'success', "REJECT dengan REJECT ID : ".$rejectId." dan DEFECT ID : ".$defectId." berhasil di kembalikan ke DEFECT.");
-        } else {
-            $this->emit('alert', 'error', "Terjadi kesalahan. REJECT dengan REJECT ID : ".$rejectId." dan DEFECT ID : ".$defectId." tidak berhasil dikembalikan ke DEFECT.");
-        }
-    }
+        //     if ($deleteReject) {
+        //         $this->emit('alert', 'success', "REJECT dengan REJECT ID : ".$rejectId." berhasil di hapus ke DEFECT.");
+        //     } else {
+        //         $this->emit('alert', 'error', "Terjadi kesalahan. REJECT dengan REJECT ID : ".$rejectId." tidak berhasil dihapus.");
+        //     }
+        // }
 
     public function render(SessionManager $session)
     {
@@ -795,75 +898,152 @@ class Reject extends Component
 
         $this->emit('setSelectedSizeSelect2', $this->selectedColor);
 
-        $this->allDefectImage = MasterPlan::select('gambar')->find($this->orderInfo->id);
+        $this->allRejectImage = MasterPlan::select('gambar')->find($this->orderInfo->id);
 
-        $this->allDefectPosition = DB::table('output_defects_packing')->where('output_defects_packing.defect_status', 'defect')->
-            where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
-            get();
+        $allRejectPositionQc = DB::table('output_rejects')->select("reject_area_x", "reject_area_y")->
+            leftJoin("master_plan", "master_plan.id", "=", "output_rejects.master_plan_id")->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color);
+        $allRejectPositionPacking = DB::table('output_rejects_packing')->select("reject_area_x", "reject_area_y")->
+            leftJoin("master_plan", "master_plan.id", "=", "output_rejects_packing.master_plan_id")->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color);
+        $this->allRejectPosition = $allRejectPositionQc->union($allRejectPositionPacking)->get();
 
-        $allDefectList = DB::table('output_defects_packing')->selectRaw('output_defects_packing.defect_type_id, output_defects_packing.defect_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_defects_packing.defect_area_id')->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_defects_packing.defect_type_id')->
-            where('output_defects_packing.defect_status', 'defect')->
-            where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
+        // Reject List
+        $rejectQcList = DB::table('output_rejects')->selectRaw('"qc" as output_type, output_rejects.reject_type_id, output_rejects.reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
+            leftJoin("master_plan", "master_plan.id", "=", "output_rejects.master_plan_id")->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_rejects.reject_area_id')->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_rejects.reject_type_id')->
+            leftJoin('output_rfts_packing_po', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc"'));
+            })->
+            whereNull('output_rfts_packing_po.id')->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color)->
             whereRaw("
                 (
-                    output_defect_types.defect_type LIKE '%".$this->allDefectListFilter."%' OR
-                    output_defect_areas.defect_area LIKE '%".$this->allDefectListFilter."%'
+                    output_defect_types.defect_type LIKE '%".$this->allRejectListFilter."%' OR
+                    output_defect_areas.defect_area LIKE '%".$this->allRejectListFilter."%'
                 )
             ")->
-            groupBy('output_defects_packing.defect_type_id', 'output_defects_packing.defect_area_id', 'output_defect_types.defect_type', 'output_defect_areas.defect_area')->
-            orderBy('output_defects_packing.updated_at', 'desc')->
-            paginate(5, ['*'], 'allDefectListPage');
+            groupBy('output_rejects.reject_type_id', 'output_rejects.reject_area_id', 'output_defect_types.defect_type', 'output_defect_areas.defect_area')->
+            orderBy('total', 'desc');
+        $rejectPackingList = DB::table('output_rejects_packing')->selectRaw('"packing" as output_type, output_rejects_packing.reject_type_id, output_rejects_packing.reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing.master_plan_id')->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_rejects_packing.reject_area_id')->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_rejects_packing.reject_type_id')->
+            leftJoin('output_rfts_packing_po', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects_packing.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"packing"'));
+            })->
+            whereNull('output_rfts_packing_po.id')->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color)->
+            whereRaw("
+                (
+                    output_defect_types.defect_type LIKE '%".$this->allRejectListFilter."%' OR
+                    output_defect_areas.defect_area LIKE '%".$this->allRejectListFilter."%'
+                )
+            ")->
+            groupBy('output_rejects_packing.reject_type_id', 'output_rejects_packing.reject_area_id', 'output_defect_types.defect_type', 'output_defect_areas.defect_area')->
+            orderBy('total', 'desc');
+        $allRejectList = $rejectQcList->union($rejectPackingList)->groupBy('output_type', 'reject_type_id', 'reject_area_id', 'defect_type', 'defect_area')->orderBy("total", "desc")->paginate(5, ['*'], 'allRejectListPage');
 
-        $defects = DB::table('output_defects_packing')->selectRaw('output_defects_packing.*, output_defect_types.defect_type, output_defect_areas.defect_area, so_det.size as so_det_size')->
-            leftJoin('so_det', 'so_det.id', '=', 'output_defects_packing.so_det_id')->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_defects_packing.defect_area_id')->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_defects_packing.defect_type_id')->
-            where('output_defects_packing.defect_status', 'defect')->
-            where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
+        // Reject IN
+        $rejectsQc = DB::table('output_rejects')->selectRaw('output_rejects.id, master_plan.sewing_line, output_rejects.kode_numbering, output_rejects.updated_at, output_rejects.created_at, output_rejects.reject_area_x, output_rejects.reject_area_y, output_rejects.reject_status, "qc" as output_type, output_defect_types.defect_type, output_defect_areas.defect_area, so_det.size as so_det_size')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects.master_plan_id')->
+            leftJoin('so_det', 'so_det.id', '=', 'output_rejects.so_det_id')->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_rejects.reject_area_id')->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_rejects.reject_type_id')->
+            leftJoin('output_rfts_packing_po', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc"'));
+            })->
+            whereNull('output_rfts_packing_po.id')->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color)->
             whereRaw("(
-                output_defects_packing.id LIKE '%".$this->searchDefect."%' OR
-                so_det.size LIKE '%".$this->searchDefect."%' OR
-                output_defect_areas.defect_area LIKE '%".$this->searchDefect."%' OR
-                output_defect_types.defect_type LIKE '%".$this->searchDefect."%' OR
-                output_defects_packing.defect_status LIKE '%".$this->searchDefect."%'
+                'qc' LIKE '%".$this->searchRejectIn."%' OR
+                output_rejects.id LIKE '%".$this->searchRejectIn."%' OR
+                so_det.size LIKE '%".$this->searchRejectIn."%' OR
+                output_defect_areas.defect_area LIKE '%".$this->searchRejectIn."%' OR
+                output_defect_types.defect_type LIKE '%".$this->searchRejectIn."%' OR
+                output_rejects.reject_status LIKE '%".$this->searchRejectIn."%'
             )")->
-            orderBy('output_defects_packing.updated_at', 'desc')->paginate(10, ['*'], 'defectsPage');
-
-        $rejects = RejectModel::selectRaw('output_rejects_packing.*, so_det.size as so_det_size')->
-            leftJoin('output_defects_packing', 'output_defects_packing.id', '=', 'output_rejects_packing.defect_id')->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_defects_packing.defect_area_id, output_rejects_packing.reject_area_id)'))->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_defects_packing.defect_type_id, output_rejects_packing.reject_type_id)'))->
-            leftJoin('so_det', 'so_det.id', '=', DB::raw('COALESCE(output_defects_packing.so_det_id, output_rejects_packing.so_det_id)'))->
-            where('output_rejects_packing.master_plan_id', $this->orderInfo->id)->
+            orderBy('output_rejects.updated_at', 'desc');
+        $rejectsPacking = DB::table('output_rejects_packing')->selectRaw('output_rejects_packing.id, master_plan.sewing_line, output_rejects_packing.kode_numbering, output_rejects_packing.updated_at, output_rejects_packing.created_at, output_rejects_packing.reject_area_x, output_rejects_packing.reject_area_y, output_rejects_packing.reject_status, "packing" as output_type, output_defect_types.defect_type, output_defect_areas.defect_area, so_det.size as so_det_size')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing.master_plan_id')->
+            leftJoin('so_det', 'so_det.id', '=', 'output_rejects_packing.so_det_id')->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_rejects_packing.reject_area_id')->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_rejects_packing.reject_type_id')->
+            leftJoin('output_rfts_packing_po', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects_packing.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"packing"'));
+            })->
+            whereNull('output_rfts_packing_po.id')->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color)->
             whereRaw("(
-                output_rejects_packing.id LIKE '%".$this->searchReject."%' OR
-                output_defects_packing.id LIKE '%".$this->searchReject."%' OR
+                'finishing' LIKE '%".$this->searchRejectIn."%' OR
+                output_rejects_packing.id LIKE '%".$this->searchRejectIn."%' OR
+                so_det.size LIKE '%".$this->searchRejectIn."%' OR
+                output_defect_areas.defect_area LIKE '%".$this->searchRejectIn."%' OR
+                output_defect_types.defect_type LIKE '%".$this->searchRejectIn."%' OR
+                output_rejects_packing.reject_status LIKE '%".$this->searchRejectIn."%'
+            )")->
+            orderBy('output_rejects_packing.updated_at', 'desc');
+        $rejectIn = $rejectsQc->union($rejectsPacking)->paginate(10, ['*'], 'rejectInPage');
+
+        $rejects = Rft::selectRaw('output_rfts_packing_po.*, ppic_master_so.po, COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id) as reject_type_id, COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id) as reject_area_id, COALESCE(output_rejects_packing.reject_area_x, output_rejects.reject_area_x) as reject_area_x, COALESCE(output_rejects_packing.reject_area_y, output_rejects.reject_area_y) as reject_area_y, output_defect_types.defect_type, output_defect_areas.defect_area, UPPER(output_rfts_packing_po.status) as reject_status, so_det.size as so_det_size')->
+            leftJoin('output_rejects', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc"'));
+            })->
+            leftJoin('output_rejects_packing', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects_packing.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"packing"'));
+            })->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id)'))->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id)'))->
+            leftJoin('so_det', 'so_det.id', '=', 'output_rfts_packing_po.so_det_id')->
+            leftJoin('laravel_nds.ppic_master_so', 'ppic_master_so.id', '=', 'output_rfts_packing_po.po_id')->
+            where('output_rfts_packing_po.type', 'reject')->
+            where('output_rfts_packing_po.master_plan_id', $this->orderInfo->id)->
+            whereRaw("(
+                output_rfts_packing_po.department LIKE '%".$this->searchReject."%' OR
+                output_rfts_packing_po.id LIKE '%".$this->searchReject."%' OR
                 so_det.size LIKE '%".$this->searchReject."%' OR
                 output_defect_areas.defect_area LIKE '%".$this->searchReject."%' OR
                 output_defect_types.defect_type LIKE '%".$this->searchReject."%' OR
-                output_rejects_packing.reject_status LIKE '%".$this->searchReject."%'
+                output_rfts_packing_po.status LIKE '%".$this->searchReject."%'
             )")->
-            orderBy('output_rejects_packing.updated_at', 'desc')->paginate(10, ['*'], 'rejectsPage');
+            orderBy('output_rfts_packing_po.updated_at', 'desc')->paginate(10, ['*'], 'rejectsPage');
 
         $this->massSelectedDefect = DB::table('output_defects_packing')->selectRaw('output_defects_packing.so_det_id, so_det.size as size, count(*) as total')->
             leftJoin('so_det', 'so_det.id', '=', 'output_defects_packing.so_det_id')->
             where('output_defects_packing.defect_status', 'defect')->
             where('output_defects_packing.master_plan_id', $this->orderInfo->id)->
-            where('output_defects_packing.defect_type_id', $this->massDefectType)->
-            where('output_defects_packing.defect_area_id', $this->massDefectArea)->
+            where('output_defects_packing.defect_type_id', $this->massRejectType)->
+            where('output_defects_packing.defect_area_id', $this->massRejectArea)->
             groupBy('output_defects_packing.so_det_id', 'so_det.size')->get();
 
         // Defect types
-        $this->defectTypes = DB::table("output_defect_types")->leftJoin(DB::raw("(select reject_type_id, count(id) total_reject from output_rejects where updated_at between '".date("Y-m-d", strtotime(date("Y-m-d").' -10 days'))." 00:00:00' and '".date("Y-m-d")." 23:59:59' group by reject_type_id) as rejects"), "rejects.reject_type_id", "=", "output_defect_types.id")->whereRaw("(hidden IS NULL OR hidden != 'Y')")->orderBy('defect_type')->get();
+        $this->defectTypes = DB::table("output_defect_types")->whereRaw("(hidden IS NULL OR hidden != 'Y')")->orderBy('defect_type')->get();
 
         // Defect areas
-        $this->defectAreas = DB::table("output_defect_areas")->leftJoin(DB::raw("(select reject_area_id, count(id) total_reject from output_rejects where updated_at between '".date("Y-m-d", strtotime(date("Y-m-d").' -10 days'))." 00:00:00' and '".date("Y-m-d")." 23:59:59' group by reject_area_id) as rejects"), "rejects.reject_area_id", "=", "output_defect_areas.id")->whereRaw("(hidden IS NULL OR hidden != 'Y')")->orderBy('defect_area')->get();
+        $this->defectAreas = DB::table("output_defect_areas")->whereRaw("(hidden IS NULL OR hidden != 'Y')")->orderBy('defect_area')->get();
 
         // Reject
-        $this->reject = collect(DB::select("select output_rejects_packing.*, so_det.size, COUNT(output_rejects_packing.id) output from `output_rejects_packing` left join `so_det` on `so_det`.`id` = `output_rejects_packing`.`so_det_id` where `master_plan_id` = '".$this->orderInfo->id."' and `status` = 'NORMAL' group by so_det.id"));
+        $this->reject = collect(DB::select("select output_rfts_packing_po.*, so_det.size, COUNT(output_rfts_packing_po.id) output from `output_rfts_packing_po` left join `so_det` on `so_det`.`id` = `output_rfts_packing_po`.`so_det_id` where `master_plan_id` = '".$this->orderInfo->id."' and type = 'reject' group by so_det.id"));
 
-        return view('livewire.reject', ['defects' => $defects, 'rejects' => $rejects, 'allDefectList' => $allDefectList]);
+        return view('livewire.reject', ['rejectIn' => $rejectIn, 'rejects' => $rejects, 'allRejectList' => $allRejectList]);
     }
 }

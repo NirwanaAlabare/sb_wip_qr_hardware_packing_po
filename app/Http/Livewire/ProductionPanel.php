@@ -82,7 +82,7 @@ class ProductionPanel extends Component
         'toRft' => 'toRft',
         // 'toDefect' => 'toDefect',
         // 'toDefectHistory' => 'toDefectHistory',
-        // 'toReject' => 'toReject',
+        'toReject' => 'toReject',
         // 'toRework' => 'toRework',
         'countRft' => 'countRft',
         // 'countDefect' => 'countDefect',
@@ -114,14 +114,15 @@ class ProductionPanel extends Component
         if (Auth::user()->line_type == "multi") {
             $this->panels = true;
             $this->rft = false;
+            $this->reject = false;
         } else {
             $this->panels = false;
             $this->rft = true;
+            $this->reject = false;
         }
 
         // $this->defect = false;
         // $this->defectHistory = false;
-        $this->reject = false;
         // $this->rework = false;
         $this->outputRft = 0;
         // $this->outputDefect = 0;
@@ -385,6 +386,7 @@ class ProductionPanel extends Component
                 master_plan.id as id,
                 master_plan.tgl_plan as tgl_plan,
                 REPLACE(master_plan.sewing_line, '_', ' ') as sewing_line,
+                act_costing.id as id_ws,
                 act_costing.kpno as ws_number,
                 act_costing.styleno as style_name,
                 mastersupplier.supplier as buyer_name,
@@ -552,13 +554,15 @@ class ProductionPanel extends Component
         $this->outputRft = DB::table('output_rfts_packing_po')->
             where('master_plan_id', $this->orderInfo->id)->
             where('status', 'NORMAL')->
+            where('type', 'rft')->
             count();
         // $this->outputDefect = DB::table('output_defects_packing')->
         //     where('master_plan_id', $this->orderInfo->id)->
         //     where('defect_status', 'defect')->
         //     count();
-        $this->outputReject = DB::table('output_rejects_packing_po')->
+        $this->outputReject = DB::table('output_rfts_packing_po')->
             where('master_plan_id', $this->orderInfo->id)->
+            where('type', 'reject')->
             count();
         // $this->outputRework = DB::table('output_defects_packing')->
         //     where('master_plan_id', $this->orderInfo->id)->
@@ -591,10 +595,10 @@ class ProductionPanel extends Component
             //         get();
             //     break;
             case 'reject' :
-                $this->undoSizes = DB::table('output_rejects_packing_po')->selectRaw('so_det.id as so_det_id, so_det.size, count(*) as total')->
+                $this->undoSizes = DB::table('output_rfts_packing_po')->selectRaw('so_det.id as so_det_id, so_det.size, count(*) as total')->
                     leftJoin('so_det', 'so_det.id', '=', 'output_rejects_packing_po.so_det_id')->
                     where('master_plan_id', $this->orderInfo->id)->
-                    where('status', 'NORMAL')->
+                    where('type', 'reject')->
                     orderBy('updated_at', 'DESC')->
                     orderBy('created_at', 'DESC')->
                     groupBy('so_det.id', 'so_det.size')->

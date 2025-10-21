@@ -1,5 +1,5 @@
 <div>
-    <div class="loading-container-fullscreen" wire:loading wire:target="selectDefectAreaPosition, setAndSubmitInput, preSubmitInput, submitInput, updateOrder, submitRapidInput">
+    <div class="loading-container-fullscreen" wire:loading wire:target="selectDefectAreaPosition, setAndSubmitInput, submitInput, updateOrder, submitRapidInput">
         <div class="loading-container">
             <div class="loading"></div>
         </div>
@@ -71,7 +71,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header align-items-center bg-reject text-light">
-                    <p class="mb-0 fs-5">Defect List</p>
+                    <p class="mb-0 fs-5">Reject In List</p>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -83,11 +83,11 @@
                             </div>
                             <div class="scroll-defect-area-img" wire:loading.remove wire:target='loadRejectPage'>
                                 <div class="all-defect-area-img-container">
-                                    @foreach ($allDefectPosition as $defectPosition)
-                                        <div class="all-defect-area-img-point" data-x="{{ floatval($defectPosition->defect_area_x) }}" data-y="{{ floatval($defectPosition->defect_area_y) }}"></div>
+                                    @foreach ($allRejectPosition as $rejectPosition)
+                                        <div class="all-defect-area-img-point" data-x="{{ floatval($rejectPosition->reject_area_x) }}" data-y="{{ floatval($rejectPosition->reject_area_y) }}"></div>
                                     @endforeach
-                                    @if ($allDefectImage)
-                                        <img src="http://10.10.5.62:8080/erp/pages/prod_new/upload_files/{{ $allDefectImage->gambar }}" class="all-defect-area-img" id="all-defect-area-img" alt="defect image">
+                                    @if ($allRejectImage)
+                                        <img src="http://10.10.5.62:8080/erp/pages/prod_new/upload_files/{{ $allRejectImage->gambar }}" class="all-defect-area-img" id="all-defect-area-img" alt="defect image">
                                     @else
                                         <img src="/assets/images/notfound.png" class="all-defect-area-img" alt="defect image">
                                     @endif
@@ -96,20 +96,21 @@
                         </div>
                         <div class="col-md-7 table-responsive">
                             <div class="d-flex align-items-center gap-3 my-3">
-                                <button class="btn btn-reject fw-bold rounded-0 w-25 h-100 disabled d-none" wire:click="$emit('preSubmitAllReject')">Reject all</button>
-                                <input type="text" class="form-control rounded-0 w-75 h-100" wire:model='allDefectListFilter' placeholder="Search defect">
+                                {{-- <button class="btn btn-reject fw-bold rounded-0 w-25 h-100 disabled d-none" wire:click="$emit('preSubmitAllReject')">Reject all</button> --}}
+                                <input type="text" class="form-control rounded-0 w-75 h-100" wire:model='allRejectListFilter' placeholder="Search reject">
                             </div>
                             <table class="table table-bordered vertical-align-center">
                                 <thead>
                                     <tr>
                                         <th>Tipe</th>
                                         <th>Area</th>
+                                        <th>Dept.</th>
                                         <th>Total</th>
                                         <th class="d-none">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if ($allDefectList->count() < 1)
+                                    @if ($allRejectList->count() < 1)
                                         <tr>
                                             <td colspan="4" class="text-center">
                                                 <div wire:loading>
@@ -121,21 +122,22 @@
                                             </td>
                                         </tr>
                                     @else
-                                        @foreach ($allDefectList as $defectList)
+                                        @foreach ($allRejectList as $rejectList)
                                             <tr>
-                                                <td>{{ $defectList->defect_type }}</td>
-                                                <td>{{ $defectList->defect_area }}</td>
-                                                <td><b>{{$defectList->total}}</b></td>
+                                                <td>{{ $rejectList->defect_type }}</td>
+                                                <td>{{ $rejectList->defect_area }}</td>
+                                                <td>{{ strtoupper($rejectList->output_type == "packing" ? "finishing" : $rejectList->output_type) }}</td>
+                                                <td><b>{{$rejectList->total}}</b></td> 
                                                 <td class="d-none">
                                                     <div wire:loading>
                                                         <div class="loading-small"></div>
                                                     </div>
                                                     <div wire:loading.remove>
-                                                        <button class="btn btn-sm btn-reject fw-bold w-100"
-                                                            wire:click="preSubmitMassReject('{{ $defectList->defect_type_id }}', '{{ $defectList->defect_area_id }}', '{{ $defectList->defect_type }}', '{{ $defectList->defect_area }}')"
+                                                        {{-- <button class="btn btn-sm btn-reject fw-bold w-100"
+                                                            wire:click="preSubmitMassReject('{{ $rejectList->reject_type_id }}', '{{ $rejectList->reject_area_id }}', '{{ $rejectList->defect_type }}', '{{ $rejectList->defect_area }}')"
                                                         >
                                                             Reject
-                                                        </button>
+                                                        </button> --}}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -143,7 +145,7 @@
                                     @endif
                                 </tbody>
                             </table>
-                            {{ $allDefectList->links() }}
+                            {{ $allRejectList->links() }}
                         </div>
                     </div>
                 </div>
@@ -152,11 +154,11 @@
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center bg-reject text-light">
-                    <p class="mb-0 fs-5">Data Defect</p>
+                    <p class="mb-0 fs-5">Data Reject IN</p>
                     <div class="d-flex justify-content-end align-items-center gap-1">
-                        <button type="button" class="btn btn-dark" wire:click="$emit('preSubmitUndo', 'defect')" disabled>
+                        {{-- <button type="button" class="btn btn-dark" wire:click="$emit('preSubmitUndo', 'defect')" disabled>
                             <i class="fa-regular fa-rotate-left"></i>
-                        </button>
+                        </button> --}}
                         {{-- <button type="button" class="btn btn-dark">
                             <i class="fa-regular fa-gear"></i>
                         </button> --}}
@@ -164,55 +166,59 @@
                 </div>
                 <div class="card-body table-responsive">
                     <div class="d-flex justify-content-center align-items-center">
-                        <input type="text" class="form-control mb-3 rounded-0" id="search-defect" name="search-defect" wire:model='searchDefect' placeholder="Search here...">
+                        <input type="text" class="form-control mb-3 rounded-0" id="search-reject" name="search-reject" wire:model='searchRejectIn' placeholder="Search here...">
                     </div>
                     <table class="table table-bordered text-center align-middle">
                         <tr>
                             <th>No.</th>
+                            <th>Dept.</th>
+                            <th>Line</th>
                             <th>Waktu</th>
                             <th>QR</th>
                             <th>Size</th>
-                            <th>Defect Type</th>
-                            <th>Defect Area</th>
-                            <th>Defect Area Image</th>
+                            <th>Reject Type</th>
+                            <th>Reject Area</th>
+                            <th>Reject Area Image</th>
                             <th>Status</th>
                             <th class="d-none">Action</th>
                         </tr>
-                        @if ($defects->count() < 1)
+                        @if ($rejectIn->count() < 1)
                             <tr>
-                                <td colspan='9'>Defect tidak ditemukan</td>
+                                <td colspan='11'>Reject tidak ditemukan</td>
                             </tr>
                         @else
-                            @foreach ($defects as $defect)
+                            @foreach ($rejectIn as $reject)
                                 <tr>
-                                    <td>{{ $defects->firstItem() + $loop->index }}</td>
-                                    <td>{{ $defect->updated_at ? $defect->created_at : $defect->updated_at }}</td>
-                                    <td>{{ $defect->kode_numbering ? $defect->kode_numbering : '-' }}</td>
-                                    <td>{{ $defect->so_det_size }}</td>
-                                    <td>{{ $defect->defect_type}}</td>
-                                    <td>{{ $defect->defect_area }}</td>
+                                    <td>{{ $rejectIn->firstItem() + $loop->index }}</td>
+                                    <td>{{ strtoupper($reject->output_type == "packing" ? "finishing" : $reject->output_type) }}</td>
+                                    <td>{{ strtoupper(str_replace("_", " ", $reject->sewing_line)) }}</td>
+                                    <td>{{ $reject->updated_at ? $reject->created_at : $reject->updated_at }}</td>
+                                    <td>{{ $reject->kode_numbering ? $reject->kode_numbering : '-' }}</td>
+                                    <td>{{ $reject->so_det_size }}</td>
+                                    <td>{{ $reject->defect_type }}</td>
+                                    <td>{{ $reject->defect_area }}</td>
                                     <td>
-                                        <button type="button" class="btn btn-dark" wire:click="showDefectAreaImage('{{$allDefectImage->gambar}}', {{$defect->defect_area_x}}, {{$defect->defect_area_y}})'">
+                                        <button type="button" class="btn btn-dark" wire:click="showDefectAreaImage('{{$allRejectImage->gambar}}', {{$reject->reject_area_x}}, {{$reject->reject_area_y}})'">
                                             <i class="fa-regular fa-image"></i>
                                         </button>
                                     </td>
-                                    <td class="text-defect fw-bold">{{ strtoupper($defect->defect_status) }}</td>
+                                    <td class="{{ $reject->reject_status == 'defect' ? 'text-defect' : 'text-reject' }} fw-bold">{{ strtoupper($reject->reject_status) }}</td>
                                     <td class="d-none">
                                         <div wire:loading>
                                             <div class="loading-small"></div>
                                         </div>
                                         <div wire:loading.remove>
-                                            <button class="btn btn-sm btn-reject fw-bold w-100"
-                                                wire:click="$emit('preSubmitReject', '{{ $defect->id }}', '{{ $defect->so_det_size }}', '{{ $defect->defect_type }}', '{{ $defect->defect_area }}', '{{ $allDefectImage->gambar }}', '{{ $defect->defect_area_x }}', '{{ $defect->defect_area_y }}')">
+                                            {{-- <button class="btn btn-sm btn-reject fw-bold w-100"
+                                                wire:click="$emit('preSubmitReject', '{{ $reject->id }}', '{{ $reject->so_det_size }}', '{{ $reject->defect_type }}', '{{ $reject->defect_area }}', '{{ $allRejectImage->gambar }}', '{{ $reject->reject_area_x }}', '{{ $reject->reject_area_y }}')">
                                                 REJECT
-                                            </button>
+                                            </button> --}}
                                         </div>
                                     </td>
                                 </tr>
                             @endforeach
                         @endif
                     </table>
-                    {{ $defects->links() }}
+                    {{ $rejectIn->links() }}
                 </div>
             </div>
         </div>
@@ -236,8 +242,11 @@
                     <table class="table table-bordered text-center align-middle">
                         <tr>
                             <th>No.</th>
+                            <th>Dept.</th>
+                            <th>Line</th>
                             <th>Waktu</th>
                             <th>QR</th>
+                            <th>PO</th>
                             <th>Size</th>
                             <th>Defect Type</th>
                             <th>Defect Area</th>
@@ -247,36 +256,39 @@
                         </tr>
                         @if ($rejects->count() < 1)
                             <tr>
-                                <td colspan='9'>Reject tidak ditemukan</td>
+                                <td colspan='13'>Reject tidak ditemukan</td>
                             </tr>
                         @else
                             @foreach ($rejects as $reject)
                                 <tr>
                                     <td>{{ $rejects->firstItem() + $loop->index }}</td>
+                                    <td>{{ strtoupper($reject->department == "packing" ? "finishing" : $reject->department) }}</td>
+                                    <td>{{ strtoupper(str_replace("_", " ", $reject->created_by_line)) }}</td>
                                     <td>{{ $reject->updated_at ? $reject->created_at : $reject->updated_at }}</td>
-                                    <td>{{ $reject->defect ? $reject->defect->kode_numbering : ($reject->kode_numbering ? $reject->kode_numbering : '-') }}</td>
+                                    <td>{{ $reject->kode_numbering ? $reject->kode_numbering : '-' }}</td>
+                                    <td>{{ $reject->po ? $reject->po : '-' }}</td>
                                     <td>{{ $reject->so_det_size }}</td>
-                                    <td>{{ $reject->defect ? ($reject->defect->defectType ? $reject->defect->defectType->defect_type : '-') : ($reject->defectType ? $reject->defectType->defect_type : '-') }}</td>
-                                    <td>{{ $reject->defect ? ($reject->defect->defectArea ? $reject->defect->defectArea->defect_area : '-') : ($reject->defectArea ? $reject->defectArea->defect_area : '-') }}</td>
+                                    <td>{{ $reject->defect_type ? $reject->defect_type : '-' }}</td>
+                                    <td>{{ $reject->defect_area ? $reject->defect_area : '-' }}</td>
                                     <td>
                                         @if ($reject->defect)
-                                            <button type="button" class="btn btn-dark" wire:click="showDefectAreaImage('{{$reject->defect->masterPlan->gambar}}', {{$reject->defect->defect_area_x}}, {{$reject->defect->defect_area_y}})'">
+                                            <button type="button" class="btn btn-dark" wire:click="showDefectAreaImage('{{$allRejectImage->gambar}}', {{$reject->reject_area_x}}, {{$reject->reject_area_y}})'">
                                                 <i class="fa-regular fa-image"></i>
                                             </button>
                                         @else
-                                            <button type="button" class="btn btn-dark" wire:click="showDefectAreaImage('{{$reject->masterPlan->gambar}}', {{$reject->reject_area_x}}, {{$reject->reject_area_y}})'">
+                                            <button type="button" class="btn btn-dark" wire:click="showDefectAreaImage('{{$allRejectImage->gambar}}', {{$reject->reject_area_x}}, {{$reject->reject_area_y}})'">
                                                 <i class="fa-regular fa-image"></i>
                                             </button>
                                         @endif
                                     </td>
-                                    <td class="text-reject fw-bold">{{ $reject->defect ? "DEFECT" : "MATI" }}</td>
+                                    <td class="{{ $reject->reject_status == 'defect' ? 'text-defect' : 'text-reject' }} fw-bold">{{ $reject->reject_status }}</td>
                                     <td class="d-none">
                                         <div wire:loading>
                                             <div class="loading-small"></div>
                                         </div>
                                         <div wire:loading.remove>
                                             @if ($reject->defect)
-                                                <button class="btn btn-sm btn-defect fw-bold w-100" wire:click="$emit('preCancelReject', '{{ $reject->id }}', '{{ $reject->defect->id }}', '{{ $reject->so_det_size }}', '{{ $reject->defect->defectType ? $reject->defect->defectType->defect_type : '-' }}', '{{ ($reject->defect->defectArea ? $reject->defect->defectArea->defect_area : '-') }}', '{{$reject->defect->masterPlan->gambar}}', {{$reject->defect->defect_area_x}}, {{$reject->defect->defect_area_y}})">CANCEL</button>
+                                                {{-- <button class="btn btn-sm btn-defect fw-bold w-100" wire:click="$emit('preCancelReject', '{{ $reject->id }}', '{{ $reject->defect->id }}', '{{ $reject->so_det_size }}', '{{ $reject->defect->defectType ? $reject->defect->defectType->defect_type : '-' }}', '{{ ($reject->defect->defectArea ? $reject->defect->defectArea->defect_area : '-') }}', '{{$reject->defect->masterPlan->gambar}}', {{$reject->defect->defect_area_x}}, {{$reject->defect->defect_area_y}})">CANCEL</button> --}}
                                             @else
                                                 <button class="btn btn-sm btn-muted fw-bold w-100" disabled>MATI</button>
                                             @endif
@@ -546,7 +558,7 @@
             this.setAttribute("disabled", true);
 
             // submit
-            await @this.preSubmitInput(value);
+            await @this.submitInput(value);
 
             this.removeAttribute("disabled");
             this.value = '';

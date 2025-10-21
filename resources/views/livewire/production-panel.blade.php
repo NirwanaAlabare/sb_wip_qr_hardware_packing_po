@@ -1,5 +1,5 @@
 <div>
-    <div class="loading-container-fullscreen" wire:loading wire:target="toRft, toDefect, toDefectHistory, toReject, toRework, toProductionPanel, preSubmitUndo, submitUndo, updateOrder, toProductionPanel, setAndSubmitInput, submitInput, selectedPo, selectedPoId">
+    <div class="loading-container-fullscreen" wire:loading wire:target="toRft, toDefect, toDefectHistory, toReject, toRework, toProductionPanel, preSubmitUndo, submitUndo, updateOrder, setAndSubmitInput, submitInput, selectedPo, selectedPoId">
         <div class="loading-container">
             <div class="loading"></div>
         </div>
@@ -92,7 +92,7 @@
     <div class="production-panel row row-gap-3" id="production-panel">
         @if ($panels)
             <div class="row row-gap-3">
-                <div class="col-md-6 d-none" id="rft-panel">
+                <div class="col-md-6" id="rft-panel">
                     <div class="d-flex h-100">
                         <div class="card-custom bg-rft d-flex justify-content-between align-items-center w-75 h-100" {{-- onclick="toRft()" --}} wire:click='toRft'>
                             <div class="d-flex flex-column gap-3">
@@ -154,14 +154,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 d-none" id="reject-panel">
+                -->
+                <div class="col-md-6" id="reject-panel">
                     <div class="d-flex h-100">
                         <div class="card-custom bg-reject d-flex justify-content-between align-items-center w-75 h-100" {{-- onclick="toReject()" --}} wire:click='toReject'>
                             <div class="d-flex flex-column gap-3">
                                 <p class="text-light"><i class="fa-regular fa-circle-xmark fa-2xl"></i></p>
                                 <p class="text-light">REJECT</p>
                             </div>
-                            <p class="text-light fs-1">{{-- $outputReject --}}</p>
+                            <p class="text-light fs-1">{{ $outputReject }}</p>
                         </div>
                         <div class="card-custom-footer bg-light w-25 h-100">
                             <button type="button" class="reset single-item btn btn-pale w-100 h-100">
@@ -173,6 +174,7 @@
                         </div>
                     </div>
                 </div>
+                <!--
                 <div class="col-md-6 d-none" id="rework-panel">
                     <div class="d-flex h-100">
                         <div class="card-custom bg-rework d-flex justify-content-between align-items-center w-75 h-100" {{-- onclick="toRework()" --}} wire:click='toRework'>
@@ -216,9 +218,9 @@
 
         {{-- Reject --}}
         {{-- @if ($reject) --}}
-        {{-- <div class="{{ $reject ? '' : 'd-none' }}">
+        <div class="{{ $reject ? '' : 'd-none' }}">
             @livewire('reject', ["orderWsDetailSizes" => $orderWsDetailSizes])
-        </div> --}}
+        </div>
         {{-- @endif --}}
 
         {{-- Rework --}}
@@ -332,17 +334,19 @@
                             <button class="btn btn-defect w-100 py-5" wire:click="setAndSubmitInput('defect')" onclick="hideOutputTypeModal();">
                                 <h3><b>DEFECT</b></h3>
                             </button>
-                        </div>
+                        </div> --}}
                         <div class="col-md-6">
                             <button class="btn btn-reject w-100 py-5" wire:click="setAndSubmitInput('reject')" onclick="hideOutputTypeModal();">
                                 <h3><b>REJECT</b></h3>
                             </button>
                         </div>
+                        {{--
                         <div class="col-md-6">
                             <button class="btn btn-rework w-100 py-5" wire:click="setAndSubmitInput('rework')" onclick="hideOutputTypeModal();">
                                 <h3><b>REWORK</b></h3>
                             </button>
-                        </div> --}}
+                        </div>
+                        --}}
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -353,20 +357,26 @@
         </div>
     </div>
 
-    {{-- @if ($panels)
+    @if ($panels)
         <div class="w-100">
             <p class="mt-4 text-center opacity-50"><small><i>{{ date('Y') }} &copy; Nirwana Digital Solution</i></small></p>
         </div>
-    @endif --}}
+    @endif
 
     @if (!$panels)
         {{-- Back --}}
-        {{-- <a wire:click="toOrderList" class="back bg-success text-light text-center w-auto" id="back-button">
-            <i class="fa-regular fa-reply"></i>
-        </a> --}}
-        <a href="{{ $this->baseUrl }}" class="back bg-success text-light text-center w-auto" id="back-button">
-            <i class="fa-regular fa-reply"></i>
-        </a>
+        @if (Auth::user()->line_type == "multi")
+            <a wire:click="toProductionPanel" class="back bg-sb text-light text-center w-auto" id="back-button">
+                <i class="fa-regular fa-reply"></i>
+            </a>
+        @else
+            {{-- <a wire:click="toOrderList" class="back bg-success text-light text-center w-auto" id="back-button">
+                <i class="fa-regular fa-reply"></i>
+            </a> --}}
+            <a href="{{ $this->baseUrl }}" class="back bg-success text-light text-center w-auto" id="back-button">
+                <i class="fa-regular fa-reply"></i>
+            </a>
+        @endif
     @endif
 </div>
 
@@ -589,6 +599,8 @@
                         document.getElementById('product-po-qty').value = "";
                         document.getElementById('product-po-output').value = "";
                     }
+
+                    Livewire.emit("qrInputFocus", (@this.rft ? 'rft' : (@this.reject ? 'reject' : '')));
                 },
                 error: function(jqXHR) {
                     document.getElementById('product-po-qty').value = "";

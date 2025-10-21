@@ -18,6 +18,7 @@ class OutputGudangStok extends Model
         'kode_numbering',
         'so_det_id',
         'packing_po_id',
+        'type',
         'created_by',
         'created_by_username',
         'created_by_line',

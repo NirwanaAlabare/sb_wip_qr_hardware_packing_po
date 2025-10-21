@@ -62,16 +62,16 @@ class ProfileContent extends Component
             whereRaw("DATE(output_defects_packing.created_at) <= '".$this->dateTo."'")->
             count();
 
-        $totalRejectSql = Reject::select('output_rejects_packing.*')->
-            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing.master_plan_id');
+        $totalRejectSql = Reject::select('output_rejects_packing_po.*')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing_po.master_plan_id');
             if (Auth::user()->Groupp == 'SEWING') {
                 $totalRejectSql->where('master_plan.sewing_line', Auth::user()->username);
             }
             if ($this->masterPlan) {
                 $totalRejectSql->where('master_plan.id', $this->masterPlan);
             }
-        $totalReject = $totalRejectSql->whereRaw("DATE(output_rejects_packing.created_at) >= '".$this->dateFrom."'")->
-            whereRaw("DATE(output_rejects_packing.created_at) <= '".$this->dateTo."'")->
+        $totalReject = $totalRejectSql->whereRaw("DATE(output_rejects_packing_po.created_at) >= '".$this->dateFrom."'")->
+            whereRaw("DATE(output_rejects_packing_po.created_at) <= '".$this->dateTo."'")->
             count();
 
         $totalReworkSql = Rework::select('output_reworks_packing.*')->

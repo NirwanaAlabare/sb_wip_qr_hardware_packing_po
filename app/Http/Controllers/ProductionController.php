@@ -20,6 +20,7 @@ class ProductionController extends Controller
                 master_plan.id as id,
                 master_plan.tgl_plan as tgl_plan,
                 REPLACE(master_plan.sewing_line, '_', ' ') as sewing_line,
+                act_costing.id as id_ws,
                 act_costing.kpno as ws_number,
                 act_costing.styleno as style_name,
                 mastersupplier.supplier as buyer_name,
@@ -103,6 +104,7 @@ class ProductionController extends Controller
                     so_det.id as id,
                     '-' as po,
                     so_det.id as id_so_det,
+                    so_det.color,
                     CONCAT(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN CONCAT(' - ', so_det.dest) ELSE '' END)) as size,
                     '-' as qty_po,
                     COUNT(output_gudang_stok.id) as qty
@@ -120,6 +122,7 @@ class ProductionController extends Controller
                     ppic_master_so.id,
                     ppic_master_so.po,
                     ppic_master_so.id_so_det,
+                    so_det.color,
                     CONCAT(so_det.size, (CASE WHEN so_det.dest IS NOT NULL AND so_det.dest != '-' THEN CONCAT(' - ', so_det.dest) ELSE '' END)) as size,
                     ppic_master_so.qty_po,
                     COUNT(output_rfts_packing_po.id) as qty

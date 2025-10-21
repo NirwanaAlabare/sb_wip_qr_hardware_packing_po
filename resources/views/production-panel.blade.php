@@ -33,7 +33,7 @@
     </div> --}}
 
     {{-- Show Defect Area --}}
-    {{-- <div class="show-defect-area" id="show-defect-area">
+    <div class="show-defect-area" id="show-defect-area">
         <div class="position-relative d-flex flex-column justify-content-center align-items-center">
             <button type="button" class="btn btn-lg btn-light rounded-0 hide-defect-area-img" onclick="onHideDefectAreaImage()">
                 <i class="fa-regular fa-xmark fa-lg"></i>
@@ -43,10 +43,10 @@
                 <img src="" alt="" class="img-fluid defect-area-img" id="defect-area-img-show">
             </div>
         </div>
-    </div> --}}
+    </div>
 
     {{-- Select Reject Area --}}
-    {{-- <div class="select-defect-area" id="select-reject-area">
+    <div class="select-defect-area" id="select-reject-area">
         <div class="defect-area-position-container">
             <div class="d-flex">
                 <div class="d-flex justify-content-center align-items-center">
@@ -71,10 +71,10 @@
             <div class="defect-area-img-point" id="reject-area-img-point"></div>
             <img src="" alt="" class="img-fluid defect-area-img" id="reject-area-img">
         </div>
-    </div> --}}
+    </div>
 
     {{-- Show Reject Area --}}
-    {{-- <div class="show-defect-area" id="show-reject-area">
+    <div class="show-defect-area" id="show-reject-area">
         <div class="position-relative d-flex flex-column justify-content-center align-items-center">
             <button type="button" class="btn btn-lg btn-light rounded-0 hide-defect-area-img" onclick="onHideRejectAreaImage()">
                 <i class="fa-regular fa-xmark fa-lg"></i>
@@ -84,7 +84,7 @@
                 <img src="" alt="" class="img-fluid defect-area-img" id="reject-area-img-show">
             </div>
         </div>
-    </div> --}}
+    </div>
 @endsection
 
 @section('custom-script')
@@ -108,13 +108,17 @@
             //     } else {
             //         showDefectModal();
             //     }
-            // } else if (type == 'reject') {
-            //     if (additional) {
-            //         showRejectModal(additional);
-            //     } else {
-            //         showRejectModal();
-            //     }
-            // } else if (type == 'undo') {
+            // }
+            // else
+            if (type == 'reject')
+            {
+                if (additional) {
+                    showRejectModal(additional);
+                } else {
+                    showRejectModal();
+                }
+            }
+            // else if (type == 'undo') {
             //     showUndoModal();
             // } else if (type == 'addProductType') {
             //     showAddProductTypeModal();
@@ -148,13 +152,15 @@
             //     } else {
             //         hideDefectModal();
             //     }
-            // } else if (type == 'reject') {
-            //     if (additional) {
-            //         hideRejectModal(additional);
-            //     } else {
-            //         hideRejectModal();
-            //     }
-            // } else if (type == 'undo') {
+            // } else
+            if (type == 'reject') {
+                if (additional) {
+                    hideRejectModal(additional);
+                } else {
+                    hideRejectModal();
+                }
+            }
+            // else if (type == 'undo') {
             //     hideUndoModal();
             // } else if (type == 'addDefectType') {
             //     hideAddDefectTypeModal();
@@ -321,143 +327,143 @@
         //     });
         // });
 
-        // // REJECT ABOUT
-        // Livewire.on('preSubmitAllReject', () => {
-        //     Swal.fire({
-        //         icon: 'info',
-        //         title: 'REJECT semua DEFECT',
-        //         html: `Yakin akan me-REJECT semua DEFECT?`,
-        //         showConfirmButton: true,
-        //         showDenyButton: true,
-        //         confirmButtonText: 'Reject',
-        //         confirmButtonColor: '#fa4456',
-        //         denyButtonText: 'Batal',
-        //     }).then((result) => {
-        //         if (result.isConfirmed) {
-        //             Livewire.emit('submitAllReject');
-        //         } else if (result.isDenied) {
-        //             Swal.fire({
-        //                 icon: 'info',
-        //                 title: 'Submit REJECT dibatalkan',
-        //                 confirmButtonText: 'Ok',
-        //                 confirmButtonColor: '#fa4456',
-        //             });
-        //         }
-        //     });
-        // });
+        // REJECT ABOUT
+        Livewire.on('preSubmitAllReject', () => {
+            Swal.fire({
+                icon: 'info',
+                title: 'REJECT semua DEFECT',
+                html: `Yakin akan me-REJECT semua DEFECT?`,
+                showConfirmButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Reject',
+                confirmButtonColor: '#fa4456',
+                denyButtonText: 'Batal',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Livewire.emit('submitAllReject');
+                } else if (result.isDenied) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Submit REJECT dibatalkan',
+                        confirmButtonText: 'Ok',
+                        confirmButtonColor: '#fa4456',
+                    });
+                }
+            });
+        });
 
-        // Livewire.on('preSubmitReject', (defectId, defectSize, defectType, defectArea, defectImage, defectX, defectY) => {
-        //     Swal.fire({
-        //         icon: 'info',
-        //         title: 'REJECT defect ini?',
-        //         html: `<table class="table text-start w-auto mx-auto">
-        //                     <tr>
-        //                         <td>ID<td>
-        //                         <td>:<td>
-        //                         <td>`+defectId+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Size<td>
-        //                         <td>:<td>
-        //                         <td>`+defectSize+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Defect Type<td>
-        //                         <td>:<td>
-        //                         <td>`+defectType+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Defect Area<td>
-        //                         <td>:<td>
-        //                         <td>`+defectArea+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Defect Image<td>
-        //                         <td>:<td>
-        //                         <td>
-        //                             <button type="button" class="btn btn-dark" onclick="onShowDefectAreaImage('`+defectImage+`', '`+defectX+`', '`+defectY+`')">
-        //                                 <i class="fa-regular fa-image"></i>
-        //                             </button>
-        //                         <td>
-        //                     <tr>
-        //                 </table>`,
-        //         showConfirmButton: true,
-        //         showDenyButton: true,
-        //         confirmButtonText: 'Reject',
-        //         confirmButtonColor: '#fa4456',
-        //         denyButtonText: 'Batal',
-        //     }).then((result) => {
-        //         if (result.isConfirmed) {
-        //             Livewire.emit('submitReject', defectId);
-        //         } else if (result.isDenied) {
-        //             Swal.fire({
-        //                 icon: 'info',
-        //                 title: 'Submit REJECT dibatalkan',
-        //                 confirmButtonText: 'Ok',
-        //                 confirmButtonColor: '#fa4456',
-        //             });
-        //         }
-        //     });
-        // });
+        Livewire.on('preSubmitReject', (defectId, defectSize, defectType, defectArea, defectImage, defectX, defectY) => {
+            Swal.fire({
+                icon: 'info',
+                title: 'REJECT defect ini?',
+                html: `<table class="table text-start w-auto mx-auto">
+                            <tr>
+                                <td>ID<td>
+                                <td>:<td>
+                                <td>`+defectId+`<td>
+                            <tr>
+                            <tr>
+                                <td>Size<td>
+                                <td>:<td>
+                                <td>`+defectSize+`<td>
+                            <tr>
+                            <tr>
+                                <td>Defect Type<td>
+                                <td>:<td>
+                                <td>`+defectType+`<td>
+                            <tr>
+                            <tr>
+                                <td>Defect Area<td>
+                                <td>:<td>
+                                <td>`+defectArea+`<td>
+                            <tr>
+                            <tr>
+                                <td>Defect Image<td>
+                                <td>:<td>
+                                <td>
+                                    <button type="button" class="btn btn-dark" onclick="onShowDefectAreaImage('`+defectImage+`', '`+defectX+`', '`+defectY+`')">
+                                        <i class="fa-regular fa-image"></i>
+                                    </button>
+                                <td>
+                            <tr>
+                        </table>`,
+                showConfirmButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Reject',
+                confirmButtonColor: '#fa4456',
+                denyButtonText: 'Batal',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Livewire.emit('submitReject', defectId);
+                } else if (result.isDenied) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Submit REJECT dibatalkan',
+                        confirmButtonText: 'Ok',
+                        confirmButtonColor: '#fa4456',
+                    });
+                }
+            });
+        });
 
-        // Livewire.on('preCancelReject', (rejectId, defectId, defectSize, defectType, defectArea, defectImage, defectX, defectY) => {
-        //     Swal.fire({
-        //         icon: 'warning',
-        //         title: 'Kembalikan REJECT ini ke DEFECT?',
-        //         html: `<table class="table text-start w-auto mx-auto">
-        //                     <tr>
-        //                         <td>Reject ID<td>
-        //                         <td>:<td>
-        //                         <td>`+rejectId+`<td>
-        //                     <tr>
-        //                         <tr>
-        //                         <td>Defect ID<td>
-        //                         <td>:<td>
-        //                         <td>`+defectId+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Size<td>
-        //                         <td>:<td>
-        //                         <td>`+defectSize+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Defect Type<td>
-        //                         <td>:<td>
-        //                         <td>`+defectType+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Defect Area<td>
-        //                         <td>:<td>
-        //                         <td>`+defectArea+`<td>
-        //                     <tr>
-        //                     <tr>
-        //                         <td>Defect Image<td>
-        //                         <td>:<td>
-        //                         <td>
-        //                             <button type="button" class="btn btn-dark" onclick="onShowDefectAreaImage('`+defectImage+`', '`+defectX+`', '`+defectY+`')">
-        //                                 <i class="fa-regular fa-image"></i>
-        //                             </button>
-        //                         <td>
-        //                     <tr>
-        //                 </table>`,
-        //         showConfirmButton: true,
-        //         showDenyButton: true,
-        //         confirmButtonText: 'Defect',
-        //         confirmButtonColor: '#ff971f',
-        //         denyButtonText: 'Batal',
-        //     }).then((result) => {
-        //         if (result.isConfirmed) {
-        //             Livewire.emit('cancelReject', rejectId, defectId);
-        //         } else if (result.isDenied) {
-        //             Swal.fire({
-        //                 icon: 'info',
-        //                 title: 'Pengembalian REJECT KE DEFECT dibatalkan',
-        //                 confirmButtonText: 'Ok',
-        //                 confirmButtonColor: '#447efa',
-        //             });
-        //         }
-        //     });
-        // });
+        Livewire.on('preCancelReject', (rejectId, defectId, defectSize, defectType, defectArea, defectImage, defectX, defectY) => {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kembalikan REJECT ini ke DEFECT?',
+                html: `<table class="table text-start w-auto mx-auto">
+                            <tr>
+                                <td>Reject ID<td>
+                                <td>:<td>
+                                <td>`+rejectId+`<td>
+                            <tr>
+                                <tr>
+                                <td>Defect ID<td>
+                                <td>:<td>
+                                <td>`+defectId+`<td>
+                            <tr>
+                            <tr>
+                                <td>Size<td>
+                                <td>:<td>
+                                <td>`+defectSize+`<td>
+                            <tr>
+                            <tr>
+                                <td>Defect Type<td>
+                                <td>:<td>
+                                <td>`+defectType+`<td>
+                            <tr>
+                            <tr>
+                                <td>Defect Area<td>
+                                <td>:<td>
+                                <td>`+defectArea+`<td>
+                            <tr>
+                            <tr>
+                                <td>Defect Image<td>
+                                <td>:<td>
+                                <td>
+                                    <button type="button" class="btn btn-dark" onclick="onShowDefectAreaImage('`+defectImage+`', '`+defectX+`', '`+defectY+`')">
+                                        <i class="fa-regular fa-image"></i>
+                                    </button>
+                                <td>
+                            <tr>
+                        </table>`,
+                showConfirmButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Defect',
+                confirmButtonColor: '#ff971f',
+                denyButtonText: 'Batal',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Livewire.emit('cancelReject', rejectId, defectId);
+                } else if (result.isDenied) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Pengembalian REJECT KE DEFECT dibatalkan',
+                        confirmButtonText: 'Ok',
+                        confirmButtonColor: '#447efa',
+                    });
+                }
+            });
+        });
 
         // // Select Defect Area Position
         // Livewire.on('showSelectDefectArea', async function (defectAreaImage) {
@@ -531,111 +537,111 @@
         //     Livewire.emit('setDefectAreaPosition', defectAreaPositionX.value, defectAreaPositionY.value);
         // });
 
-        // // Select Reject Area Position
-        // Livewire.on('showSelectRejectArea', async function (rejectAreaImage) {
-        //     showSelectRejectArea(rejectAreaImage);
-        // });
+        // Select Reject Area Position
+        Livewire.on('showSelectRejectArea', async function (rejectAreaImage) {
+            showSelectRejectArea(rejectAreaImage);
+        });
 
-        // if (document.getElementById('select-reject-area')) {
-        //     let rejectAreaImageContainer = document.getElementById('reject-area-img-container');
-        //     let rejectAreaImage = document.getElementById('reject-area-img');
-        //     let rejectAreaImagePoint = document.getElementById('reject-area-img-point');
-        //     let rejectAreaPositionX = document.getElementById('reject-area-position-x');
-        //     let rejectAreaPositionY = document.getElementById('reject-area-position-y');
-        //     let rejectAreaConfirm = document.getElementById('reject-area-confirm');
-        //     let rejectAreaCancel = document.getElementById('reject-area-cancel');
+        if (document.getElementById('select-reject-area')) {
+            let rejectAreaImageContainer = document.getElementById('reject-area-img-container');
+            let rejectAreaImage = document.getElementById('reject-area-img');
+            let rejectAreaImagePoint = document.getElementById('reject-area-img-point');
+            let rejectAreaPositionX = document.getElementById('reject-area-position-x');
+            let rejectAreaPositionY = document.getElementById('reject-area-position-y');
+            let rejectAreaConfirm = document.getElementById('reject-area-confirm');
+            let rejectAreaCancel = document.getElementById('reject-area-cancel');
 
-        //     let localMousePos = { x: undefined, y: undefined };
-        //     let globalMousePos = { x: undefined, y: undefined };
+            let localMousePos = { x: undefined, y: undefined };
+            let globalMousePos = { x: undefined, y: undefined };
 
-        //     rejectAreaImageContainer.addEventListener('mousemove', (event) => {
-        //         let rect = rejectAreaImage.getBoundingClientRect();
+            rejectAreaImageContainer.addEventListener('mousemove', (event) => {
+                let rect = rejectAreaImage.getBoundingClientRect();
 
-        //         const localX = parseFloat((event.clientX - rect.left))/parseFloat(rect.width) * 100;
-        //         const localY = parseFloat((event.clientY - rect.top))/parseFloat(rect.height) * 100;
+                const localX = parseFloat((event.clientX - rect.left))/parseFloat(rect.width) * 100;
+                const localY = parseFloat((event.clientY - rect.top))/parseFloat(rect.height) * 100;
 
-        //         localMousePos = { x: localX, y: localY };
+                localMousePos = { x: localX, y: localY };
 
-        //         rejectAreaImageContainer.addEventListener('click', (event) => {
-        //             rejectAreaImagePoint.style.width = 0.03 * rect.width+'px';
-        //             rejectAreaImagePoint.style.height = rejectAreaImagePoint.style.width;
-        //             rejectAreaImagePoint.style.left =  'calc('+localMousePos.x+'% - '+0.015 * rect.width+'px)';
-        //             rejectAreaImagePoint.style.top =  'calc('+localMousePos.y+'% - '+0.015 * rect.width+'px)';
-        //             rejectAreaImagePoint.style.display = 'block';
+                rejectAreaImageContainer.addEventListener('click', (event) => {
+                    rejectAreaImagePoint.style.width = 0.03 * rect.width+'px';
+                    rejectAreaImagePoint.style.height = rejectAreaImagePoint.style.width;
+                    rejectAreaImagePoint.style.left =  'calc('+localMousePos.x+'% - '+0.015 * rect.width+'px)';
+                    rejectAreaImagePoint.style.top =  'calc('+localMousePos.y+'% - '+0.015 * rect.width+'px)';
+                    rejectAreaImagePoint.style.display = 'block';
 
-        //             rejectAreaPositionX.value = localMousePos.x;
-        //             rejectAreaPositionY.value = localMousePos.y;
-        //         });
-        //     });
+                    rejectAreaPositionX.value = localMousePos.x;
+                    rejectAreaPositionY.value = localMousePos.y;
+                });
+            });
 
-        //     rejectAreaConfirm.addEventListener('click', () => {
-        //         Livewire.emit('setRejectAreaPosition', rejectAreaPositionX.value, rejectAreaPositionY.value);
+            rejectAreaConfirm.addEventListener('click', () => {
+                Livewire.emit('setRejectAreaPosition', rejectAreaPositionX.value, rejectAreaPositionY.value);
 
-        //         hideSelectRejectArea();
-        //     });
+                hideSelectRejectArea();
+            });
 
-        //     rejectAreaCancel.addEventListener('click', () => {
-        //         rejectAreaImagePoint.style.left = '0px';
-        //         rejectAreaImagePoint.style.top = '0px';
-        //         rejectAreaImagePoint.style.display = 'none';
+            rejectAreaCancel.addEventListener('click', () => {
+                rejectAreaImagePoint.style.left = '0px';
+                rejectAreaImagePoint.style.top = '0px';
+                rejectAreaImagePoint.style.display = 'none';
 
-        //         rejectAreaPositionX.value = null;
-        //         rejectAreaPositionY.value = null;
+                rejectAreaPositionX.value = null;
+                rejectAreaPositionY.value = null;
 
-        //         Livewire.emit('setRejectAreaPosition', rejectAreaPositionX.value, rejectAreaPositionY.value);
+                Livewire.emit('setRejectAreaPosition', rejectAreaPositionX.value, rejectAreaPositionY.value);
 
-        //         hideSelectRejectArea();
-        //     });
-        // }
+                hideSelectRejectArea();
+            });
+        }
 
-        // Livewire.on('clearSelectRejectAreaPoint', () => {
-        //     let rejectAreaImagePoint = document.getElementById('reject-area-img-point');
-        //     let rejectAreaPositionX = document.getElementById('reject-area-position-x');
-        //     let rejectAreaPositionY = document.getElementById('reject-area-position-y');
+        Livewire.on('clearSelectRejectAreaPoint', () => {
+            let rejectAreaImagePoint = document.getElementById('reject-area-img-point');
+            let rejectAreaPositionX = document.getElementById('reject-area-position-x');
+            let rejectAreaPositionY = document.getElementById('reject-area-position-y');
 
-        //     rejectAreaImagePoint.style.left = '0px';
-        //     rejectAreaImagePoint.style.top = '0px';
-        //     rejectAreaImagePoint.style.display = 'none';
+            rejectAreaImagePoint.style.left = '0px';
+            rejectAreaImagePoint.style.top = '0px';
+            rejectAreaImagePoint.style.display = 'none';
 
-        //     rejectAreaPositionX.value = null;
-        //     rejectAreaPositionY.value = null;
+            rejectAreaPositionX.value = null;
+            rejectAreaPositionY.value = null;
 
-        //     Livewire.emit('setRejectAreaPosition', rejectAreaPositionX.value, rejectAreaPositionY.value);
-        // });
+            Livewire.emit('setRejectAreaPosition', rejectAreaPositionX.value, rejectAreaPositionY.value);
+        });
 
-        // function onShowDefectAreaImage(defectAreaImage, x, y) {
-        //     Livewire.emit('showDefectAreaImage', defectAreaImage, x, y);
-        // }
+        function onShowDefectAreaImage(defectAreaImage, x, y) {
+            Livewire.emit('showDefectAreaImage', defectAreaImage, x, y);
+        }
 
-        // Livewire.on('showDefectAreaImage', async function (defectAreaImage, x, y) {
-        //     await showDefectAreaImage(defectAreaImage);
+        Livewire.on('showDefectAreaImage', async function (defectAreaImage, x, y) {
+            await showDefectAreaImage(defectAreaImage);
 
-        //     let defectAreaImageElement = document.getElementById('defect-area-img-show');
-        //     let defectAreaImagePointElement = document.getElementById('defect-area-img-point-show');
+            let defectAreaImageElement = document.getElementById('defect-area-img-show');
+            let defectAreaImagePointElement = document.getElementById('defect-area-img-point-show');
 
-        //     defectAreaImageElement.style.display = 'block'
+            defectAreaImageElement.style.display = 'block'
 
-        //     let rect = await defectAreaImageElement.getBoundingClientRect();
+            let rect = await defectAreaImageElement.getBoundingClientRect();
 
-        //     let pointWidth = null;
-        //     if (rect.width == 0) {
-        //         pointWidth = 35;
-        //     } else {
-        //         pointWidth = 0.03 * rect.width;
-        //     }
+            let pointWidth = null;
+            if (rect.width == 0) {
+                pointWidth = 35;
+            } else {
+                pointWidth = 0.03 * rect.width;
+            }
 
-        //     defectAreaImagePointElement.style.width = pointWidth+'px';
-        //     defectAreaImagePointElement.style.height = defectAreaImagePointElement.style.width;
-        //     defectAreaImagePointElement.style.left = 'calc('+x+'% - '+0.5 * pointWidth+'px)';
-        //     defectAreaImagePointElement.style.top = 'calc('+y+'% - '+0.5 * pointWidth+'px)';
-        //     defectAreaImagePointElement.style.display = 'block';
-        // });
+            defectAreaImagePointElement.style.width = pointWidth+'px';
+            defectAreaImagePointElement.style.height = defectAreaImagePointElement.style.width;
+            defectAreaImagePointElement.style.left = 'calc('+x+'% - '+0.5 * pointWidth+'px)';
+            defectAreaImagePointElement.style.top = 'calc('+y+'% - '+0.5 * pointWidth+'px)';
+            defectAreaImagePointElement.style.display = 'block';
+        });
 
-        // function onHideDefectAreaImage() {
-        //     hideDefectAreaImage();
+        function onHideDefectAreaImage() {
+            hideDefectAreaImage();
 
-        //     Livewire.emit('hideDefectAreaImageClear');
-        // }
+            Livewire.emit('hideDefectAreaImageClear');
+        }
 
         // Livewire.on('loadReworkPageJs', () => {
         //     if (document.getElementById('all-defect-area-img')) {
@@ -653,21 +659,21 @@
         //     }
         // });
 
-        // Livewire.on('loadRejectPageJs', () => {
-        //     if (document.getElementById('all-defect-area-img')) {
-        //         let defectAreaImage = document.getElementById('all-defect-area-img');
-        //         let defectAreaImagePoint = document.getElementsByClassName('all-defect-area-img-point');
+        Livewire.on('loadRejectPageJs', () => {
+            if (document.getElementById('all-defect-area-img')) {
+                let defectAreaImage = document.getElementById('all-defect-area-img');
+                let defectAreaImagePoint = document.getElementsByClassName('all-defect-area-img-point');
 
-        //         let rect = defectAreaImage.getBoundingClientRect();
+                let rect = defectAreaImage.getBoundingClientRect();
 
-        //         for(i = 0; i < defectAreaImagePoint.length; i++) {
-        //             defectAreaImagePoint[i].style.width = 0.03 * rect.width+'px';
-        //             defectAreaImagePoint[i].style.height = defectAreaImagePoint[i].style.width;
-        //             defectAreaImagePoint[i].style.left =  'calc('+defectAreaImagePoint[i].getAttribute('data-x')+'% - '+0.015 * rect.width+'px)';
-        //             defectAreaImagePoint[i].style.top =  'calc('+defectAreaImagePoint[i].getAttribute('data-y')+'% - '+0.015 * rect.width+'px)';
-        //         }
-        //     }
-        // });
+                for(i = 0; i < defectAreaImagePoint.length; i++) {
+                    defectAreaImagePoint[i].style.width = 0.03 * rect.width+'px';
+                    defectAreaImagePoint[i].style.height = defectAreaImagePoint[i].style.width;
+                    defectAreaImagePoint[i].style.left =  'calc('+defectAreaImagePoint[i].getAttribute('data-x')+'% - '+0.015 * rect.width+'px)';
+                    defectAreaImagePoint[i].style.top =  'calc('+defectAreaImagePoint[i].getAttribute('data-y')+'% - '+0.015 * rect.width+'px)';
+                }
+            }
+        });
 
         Livewire.on('loadingStart', () => {
             if (document.getElementById('loading-rft')) {
@@ -682,10 +688,10 @@
             //     $('#loading-defect-history').removeClass('hidden');
             //     $('#content-defect-history').addClass('hidden');
             // }
-            // if (document.getElementById('loading-reject')) {
-            //     $('#loading-reject').removeClass('hidden');
-            //     $('#content-reject').addClass('hidden');
-            // }
+            if (document.getElementById('loading-reject')) {
+                $('#loading-reject').removeClass('hidden');
+                $('#content-reject').addClass('hidden');
+            }
             // if (document.getElementById('loading-rework')) {
             //     $('#loading-rework').removeClass('hidden');
             //     $('#content-rework').addClass('hidden');

@@ -109,22 +109,22 @@ class HistoryContent extends Component
         //     orderBy("output_defects_packing.created_at", "desc")->
         //     limit("5")->get();
 
-        // $latestOutputRejects = DB::table('output_rejects_packing')->selectRaw('output_rejects_packing.kode_numbering, output_rejects_packing.updated_at, so_det.size as size, count(*) as total')->
-        //     leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing.master_plan_id')->
-        //     leftJoin('so_det', 'so_det.id', '=', 'output_rejects_packing.so_det_id')->
-        //     where('master_plan.sewing_line', Auth::user()->username);
-        //     if (Auth::user()->Groupp == 'SEWING') {
-        //         $latestOutputRejects->where('master_plan.sewing_line', Auth::user()->username);
-        //     }
-        //     if ($this->masterPlan) {
-        //         $latestOutputRejects->where('master_plan.id', $this->masterPlan);
-        //     }
-        // $latestRejects = $latestOutputRejects->whereRaw("DATE(output_rejects_packing.created_at) BETWEEN '".$this->dateFrom."' AND '".$this->dateTo."'")->
-        //     // whereRaw("master_plan.tgl_plan BETWEEN '".$this->dateFrom."' AND '".$this->dateTo."'")->
-        //     groupBy("output_rejects_packing.updated_at", "so_det.size")->
-        //     orderBy("output_rejects_packing.updated_at", "desc")->
-        //     orderBy("output_rejects_packing.created_at", "desc")->
-        //     limit("5")->get();
+        $latestOutputRejects = DB::table('output_rejects_packing_po')->selectRaw('output_rejects_packing_po.kode_numbering, output_rejects_packing_po.updated_at, so_det.size as size, count(*) as total')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing_po.master_plan_id')->
+            leftJoin('so_det', 'so_det.id', '=', 'output_rejects_packing_po.so_det_id')->
+            where('master_plan.sewing_line', Auth::user()->username);
+            if (Auth::user()->Groupp == 'SEWING') {
+                $latestOutputRejects->where('master_plan.sewing_line', Auth::user()->username);
+            }
+            if ($this->masterPlan) {
+                $latestOutputRejects->where('master_plan.id', $this->masterPlan);
+            }
+        $latestRejects = $latestOutputRejects->whereRaw("DATE(output_rejects_packing_po.created_at) BETWEEN '".$this->dateFrom."' AND '".$this->dateTo."'")->
+            // whereRaw("master_plan.tgl_plan BETWEEN '".$this->dateFrom."' AND '".$this->dateTo."'")->
+            groupBy("output_rejects_packing_po.updated_at", "so_det.size")->
+            orderBy("output_rejects_packing_po.updated_at", "desc")->
+            orderBy("output_rejects_packing_po.created_at", "desc")->
+            limit("5")->get();
 
         // $latestOutputReworks = DB::table('output_reworks_packing')->selectRaw('
         //         output_defects_packing.kode_numbering,
@@ -169,7 +169,7 @@ class HistoryContent extends Component
             // 'latestOutput' => $latestOutput,
             'latestRfts' => $latestRfts,
             // 'latestDefects' => $latestDefects,
-            // 'latestRejects' => $latestRejects,
+            'latestRejects' => $latestRejects,
             // 'latestReworks' => $latestReworks
         ]);
     }

@@ -11,24 +11,28 @@ class Reject extends Model
 
     protected $connection = 'mysql_sb';
 
-    protected $table = 'output_rejects_packing';
+    protected $table = 'output_rejects_packing_po';
 
     protected $fillable = [
         'id',
         'master_plan_id',
         'so_det_id',
+        'po_id',
         'no_cut_size',
         'kode_numbering',
         'status',
         'defect_id',
+        'reject_id',
         'reject_type_id',
         'reject_area_id',
         'reject_area_x',
         'reject_area_y',
         'reject_status',
+        'created_by',
+        'created_by_username',
+        'created_by_line',
         'created_at',
         'updated_at',
-        'created_by',
     ];
 
     public function masterPlan()

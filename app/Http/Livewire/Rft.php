@@ -75,8 +75,13 @@ class Rft extends Component
 
     private function checkIfNumberingExists($numberingInput = null): bool
     {
-        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->exists()) {
+        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "rft")->exists()) {
             $this->addError('numberingInput', 'Kode QR sudah discan di RFT.');
+            return true;
+        }
+
+        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "reject")->exists()) {
+            $this->addError('numberingInput', 'Kode QR sudah discan di Reject.');
             return true;
         }
 
@@ -89,6 +94,8 @@ class Rft extends Component
         //     $this->addError('numberingInput', 'Kode QR sudah discan di Reject.');
         //     return true;
         // }
+
+        $this->emit('qrInputFocus', 'reject');
 
         return false;
     }
@@ -119,7 +126,7 @@ class Rft extends Component
 
     public function updateOutput()
     {
-        $this->rft = DB::connection('mysql_sb')->table('output_rfts_packing')->
+        $this->rft = DB::connection('mysql_sb')->table('output_rfts_packing_po')->
             leftJoin("so_det", "so_det.id", "=", "output_rfts_packing_po.so_det_id")->
             where('master_plan_id', $this->orderInfo->id)->
             where('status', 'NORMAL')->
@@ -234,7 +241,7 @@ class Rft extends Component
                                     // NDS Data Update
                                     DB::connection('mysql_nds')->unprepared("
                                         UPDATE output_rfts_packing SET so_det_id = {$id} WHERE kode_numbering = '{$num}';
-                                        UPDATE year_sequence        SET so_det_id = {$id} WHERE id = {$numId};
+                                        UPDATE year_sequence       SET so_det_id = {$id} WHERE id = {$numId};
                                     ");
                                 }
 
@@ -246,6 +253,9 @@ class Rft extends Component
                                     'kode_numbering' => $numberingInput,
                                     'status' => 'NORMAL',
                                     'alokasi' => $currentPo ? "po" : "gudang stok",
+                                    'rft_id' => $finishlineOutputData ? $finishlineOutputData->id : NULL,
+                                    'type' => 'rft',
+                                    'department' => 'packing',
                                     'created_by' => Auth::user()->id,
                                     'created_by_username' => Auth::user()->username,
                                     'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
@@ -259,6 +269,7 @@ class Rft extends Component
                                             'kode_numbering' => $numberingInput,
                                             'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,
                                             'packing_po_id' => $insertRft->id,
+                                            'type' => 'rft',
                                             'created_by' => Auth::user()->id,
                                             'created_by_username' => Auth::user()->username,
                                             'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
@@ -341,17 +352,38 @@ class Rft extends Component
                 // }
 
                 // One Straight Format
-                $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $this->rapidRft[$i]['numberingInput'])->first();
+                $numberingData = DB::connection("mysql_nds")->table("year_sequence")->
+                    selectRaw("year_sequence.*, so_det.dest, so_det.color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
+                    leftJoin("signalbit_erp.so_det", "so_det.id", "=", "year_sequence.so_det_id")->
+                    leftJoin("signalbit_erp.so", "so.id", "=", "so_det.id_so")->
+                    leftJoin("signalbit_erp.act_costing", "act_costing.id", "=", "so.id_cost")->
+                    where("id_year_sequence", $this->rapidRft[$i]['numberingInput'])->
+                    first();
 
-                $finishlineOutputCount = DB::connection('mysql_sb')->table('output_rfts_packing')->where("kode_numbering", $this->rapidRft[$i]['numberingInput'])->count();
+                $finishlineOutputData = DB::connection('mysql_sb')->table('output_rfts_packing')->where("kode_numbering", $this->rapidRft[$i]['numberingInput'])->first();
 
-                if ($finishlineOutputCount > 0) {
+                if ($finishlineOutputData > 0) {
 
                     $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
-                                ppic_master_so.id
+                                ppic_master_so.id,
+                                ppic_master_so.po,
+                                ppic_master_so.id_so_det,
+                                so_det.size,
+                                ppic_master_so.qty_po,
+                                COUNT(output_rfts_packing_po.id) as qty_output
                             ")
-                            ->where('ppic_master_so.po', $this->selectedPo)
-                            ->where('ppic_master_so.id_so_det', $this->sizeInput)
+                            ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
+                            ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+                            ->leftJoin('signalbit_erp.so', 'so.id', '=', 'so_det.id_so')
+                            ->leftJoin('signalbit_erp.act_costing', 'act_costing.id', '=', 'so.id_cost')
+                            ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+                            ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
+                            ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                            ->where('so_det.cancel', '!=', 'Y')
+                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
+                            ->where('so_det.color', $numberingData->color) // By Size & Color
+                            ->where('so_det.size', $numberingData->size) // By Size & Color
+                            ->groupBy('ppic_master_so.id')
                             ->first();
 
                     if ($currentPo) {
@@ -362,7 +394,10 @@ class Rft extends Component
                             'no_cut_size' => $numberingData->no_cut_size,
                             'kode_numbering' => $this->rapidRft[$i]['numberingInput'],
                             'status' => 'NORMAL',
-                            'alokasi' => ($currentPo ? 'po' : 'gudang stok'),
+                            'alokasi' => $currentPo ? 'po' : 'gudang stok',
+                            'rft_id' => $finishlineOutputData ? $finishlineOutputData->id : NULL,
+                            'type' => 'rft',
+                            'department' => 'packing',
                             'created_by' => Auth::user()->line_id,
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now()
@@ -394,7 +429,7 @@ class Rft extends Component
         $this->sizeInput = $scannedSize;
         $this->sizeInputText = $scannedSizeText;
 
-        $this->submitInput();
+        $this->submitInput($scannedNumbering);
     }
 
     public function render(SessionManager $session)
