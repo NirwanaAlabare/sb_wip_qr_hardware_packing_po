@@ -900,60 +900,39 @@ class Reject extends Component
 
         $this->allRejectImage = MasterPlan::select('gambar')->find($this->orderInfo->id);
 
-        $allRejectPositionQc = DB::table('output_rejects')->select("reject_area_x", "reject_area_y")->
-            leftJoin("master_plan", "master_plan.id", "=", "output_rejects.master_plan_id")->
-            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
-            where('master_plan.id_ws', $this->orderInfo->id_ws)->
-            where('master_plan.color', $this->orderInfo->color);
-        $allRejectPositionPacking = DB::table('output_rejects_packing')->select("reject_area_x", "reject_area_y")->
-            leftJoin("master_plan", "master_plan.id", "=", "output_rejects_packing.master_plan_id")->
-            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
-            where('master_plan.id_ws', $this->orderInfo->id_ws)->
-            where('master_plan.color', $this->orderInfo->color);
-        $this->allRejectPosition = $allRejectPositionQc->union($allRejectPositionPacking)->get();
+        $this->allRejectPosition = Rft::select("reject_area_x", "reject_area_y")->
+            leftJoin("output_rejects", "output_rejects.id", "=", "output_rfts_packing_po.reject_id")->
+            leftJoin("output_defect_types", "output_defect_types.id", "=", "output_rejects.reject_type_id")->
+            leftJoin("output_defect_areas", "output_defect_areas.id", "=", "output_rejects.reject_area_id")->
+            where('output_rfts_packing_po.type', 'reject')->
+            where('output_rfts_packing_po.master_plan_id', $this->orderInfo->id)->
+            get();
 
         // Reject List
-        $rejectQcList = DB::table('output_rejects')->selectRaw('"qc" as output_type, output_rejects.reject_type_id, output_rejects.reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
-            leftJoin("master_plan", "master_plan.id", "=", "output_rejects.master_plan_id")->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_rejects.reject_area_id')->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_rejects.reject_type_id')->
-            leftJoin('output_rfts_packing_po', function ($join) {
+        $allRejectList = Rft::selectRaw('output_rfts_packing_po.department as output_type, COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id) as reject_type_id, COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id) as reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_rfts_packing_po.master_plan_id')->
+            leftJoin('output_rejects', function ($join) {
                 $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects.id');
                 $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc"'));
             })->
-            whereNull('output_rfts_packing_po.id')->
-            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
-            where('master_plan.id_ws', $this->orderInfo->id_ws)->
-            where('master_plan.color', $this->orderInfo->color)->
-            whereRaw("
-                (
-                    output_defect_types.defect_type LIKE '%".$this->allRejectListFilter."%' OR
-                    output_defect_areas.defect_area LIKE '%".$this->allRejectListFilter."%'
-                )
-            ")->
-            groupBy('output_rejects.reject_type_id', 'output_rejects.reject_area_id', 'output_defect_types.defect_type', 'output_defect_areas.defect_area')->
-            orderBy('total', 'desc');
-        $rejectPackingList = DB::table('output_rejects_packing')->selectRaw('"packing" as output_type, output_rejects_packing.reject_type_id, output_rejects_packing.reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
-            leftJoin('master_plan', 'master_plan.id', '=', 'output_rejects_packing.master_plan_id')->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_rejects_packing.reject_area_id')->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_rejects_packing.reject_type_id')->
-            leftJoin('output_rfts_packing_po', function ($join) {
+            leftJoin('output_rejects_packing', function ($join) {
                 $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects_packing.id');
                 $join->on('output_rfts_packing_po.department', '=', DB::raw('"packing"'));
             })->
-            whereNull('output_rfts_packing_po.id')->
-            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
-            where('master_plan.id_ws', $this->orderInfo->id_ws)->
-            where('master_plan.color', $this->orderInfo->color)->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id)'))->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id)'))->
+            where("output_rfts_packing_po.type", "reject")->
+            where('master_plan.id', $this->orderInfo->id)->
             whereRaw("
                 (
+                    output_rfts_packing_po.department LIKE '%".$this->allRejectListFilter."%' OR
                     output_defect_types.defect_type LIKE '%".$this->allRejectListFilter."%' OR
                     output_defect_areas.defect_area LIKE '%".$this->allRejectListFilter."%'
                 )
             ")->
             groupBy('output_rejects_packing.reject_type_id', 'output_rejects_packing.reject_area_id', 'output_defect_types.defect_type', 'output_defect_areas.defect_area')->
-            orderBy('total', 'desc');
-        $allRejectList = $rejectQcList->union($rejectPackingList)->groupBy('output_type', 'reject_type_id', 'reject_area_id', 'defect_type', 'defect_area')->orderBy("total", "desc")->paginate(5, ['*'], 'allRejectListPage');
+            orderBy('total', 'desc')->
+            paginate(5, ['*'], 'allRejectListPage');
 
         // Reject IN
         $rejectsQc = DB::table('output_rejects')->selectRaw('output_rejects.id, master_plan.sewing_line, output_rejects.kode_numbering, output_rejects.updated_at, output_rejects.created_at, output_rejects.reject_area_x, output_rejects.reject_area_y, output_rejects.reject_status, "qc" as output_type, output_defect_types.defect_type, output_defect_areas.defect_area, so_det.size as so_det_size')->
