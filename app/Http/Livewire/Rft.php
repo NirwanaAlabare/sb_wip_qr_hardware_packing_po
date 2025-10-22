@@ -186,6 +186,7 @@ class Rft extends Component
 
                 if ($finishlineOutputData) {
                     $currentData = $this->orderWsDetailSizes->where('id_ws', $numberingData->id_ws)->where('color', $numberingData->color)->where('size', $numberingData->size)->first();
+
                     if ($currentData && $this->orderInfo && (trim($currentData['color']) == trim($this->orderInfo->color))) {
                         $currentSizeInput = $this->sizeInput;
                         $currentSizeInputText = $this->sizeInputText;

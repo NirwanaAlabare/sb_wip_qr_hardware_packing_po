@@ -104,11 +104,13 @@ class ProductionPanel extends Component
         $session->put("orderWsDetails", $orderWsDetails);
 
         // Default value
-        $this->selectedColor = $this->orderWsDetails[0]->id;
-        $this->selectedColorName = $this->orderWsDetails[0]->color;
+        $this->selectedColor = $this->orderInfo->id;
+        $this->selectedColorName = $this->orderInfo->color;
         $this->selectedSize = 'all';
         $this->selectedPo = '';
         $this->selectedPoId = '';
+
+        $this->emit('setSelectedSizeSelect2', $this->selectedColor);
 
         // Panel
         if (Auth::user()->line_type == "multi") {
@@ -136,7 +138,7 @@ class ProductionPanel extends Component
         // $this->undoDefectArea = "";
 
         $this->orderWsDetailSizes = DB::table('master_plan')->selectRaw("
-                MIN(so_det.id) as so_det_id,
+                so_det.id as so_det_id,
                 act_costing.id as id_ws,
                 so_det.color as color,
                 so_det.size as size,
@@ -149,9 +151,9 @@ class ProductionPanel extends Component
             ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
             ->where('master_plan.sewing_line', str_replace(" ", "_", $this->orderInfo->sewing_line))
             ->where('act_costing.kpno', $this->orderInfo->ws_number)
-            ->where('so_det.color', $this->selectedColorName)
+            ->where('so_det.color', $this->orderInfo->color)
             ->where('master_plan.cancel', 'N')
-            ->groupBy('so_det.id', 'so_det.dest', 'so_det.size', 'so_det.color')
+            ->groupBy('so_det.id')
             ->orderBy('so_det_id')
             ->get();
 
@@ -438,7 +440,7 @@ class ProductionPanel extends Component
             )->get();
 
         $this->orderWsDetailSizes = DB::table('master_plan')->selectRaw("
-                MIN(so_det.id) as so_det_id,
+                so_det.id as so_det_id,
                 act_costing.id as id_ws,
                 so_det.color as color,
                 so_det.size as size,
@@ -452,7 +454,7 @@ class ProductionPanel extends Component
             ->where('master_plan.sewing_line', str_replace(" ", "_", $this->orderInfo->sewing_line))
             ->where('act_costing.kpno', $this->orderInfo->ws_number)
             ->where('so_det.color', $this->selectedColorName)
-            ->groupBy('so_det.id', 'so_det.dest', 'so_det.size', 'so_det.color')
+            ->groupBy('so_det.id')
             ->orderBy('so_det_id')
             ->get();
 

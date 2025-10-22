@@ -48,7 +48,7 @@
                 <label class="form-label mb-0">Color</label>
                 <select class="select2 form-select-sm" id="product-color" wire:model='selectedColor'>
                     @foreach ($orderWsDetails as $order)
-                        <option value="{{ $order->id }}" data-color-name="{{ $order->color }}">{{ $order->color }}</option>
+                        <option value="{{ $order->id }}" data-color-name="{{ $order->color }}">{{ $order->id }} - {{ $order->color }}</option>
                     @endforeach
                 </select>
             </div>
