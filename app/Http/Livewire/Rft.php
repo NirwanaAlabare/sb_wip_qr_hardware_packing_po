@@ -175,6 +175,10 @@ class Rft extends Component
                 $this->noCutInput = $numberingData->no_cut_size;
                 $this->numberingInput = $numberingInput;
 
+                if (!$this->sizeInput) {
+                    return $this->emit('alert', 'error', "QR belum terdaftar.");
+                }
+
                 $validatedData = $this->validate();
 
                 if ($this->checkIfNumberingExists($numberingInput)) {

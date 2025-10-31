@@ -480,6 +480,10 @@ class Rework extends Component
                 $this->sizeInputText = $numberingData->size;
                 $this->noCutInput = $numberingData->no_cut_size;
                 $this->numberingInput = $numberingInput;
+
+                if (!$this->sizeInput) {
+                    return $this->emit('alert', 'error', "QR belum terdaftar.");
+                }
             }
         }
 
