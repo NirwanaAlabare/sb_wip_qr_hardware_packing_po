@@ -403,9 +403,10 @@ class Reject extends Component
                             ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
                             ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
                             ->where('so_det.cancel', '!=', 'Y')
-                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
-                            ->where('so_det.color', $numberingData->color) // By Size & Color
-                            ->where('so_det.size', $numberingData->size) // By Size & Color
+                            ->where('ppic_master_so.po', $this->selectedPo) // By WS & Size & Color
+                            ->where('act_costing.id', $numberingData->id_ws) // By WS & Size & Color
+                            ->where('so_det.color', $numberingData->color) // By WS & Size & Color
+                            ->where('so_det.size', $numberingData->size) // By WS & Size & Color
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
@@ -552,7 +553,14 @@ class Reject extends Component
                 // }
 
                 // One Straight Format
-                $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $this->rapidReject[$i]['numberingInput'])->first();
+                $numberingData = DB::connection("mysql_nds")->
+                    table("year_sequence")->
+                    selectRaw("year_sequence.*, so_det.dest, so_det.color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
+                    leftJoin("signalbit_erp.so_det", "so_det.id", "=", "year_sequence.so_det_id")->
+                    leftJoin("signalbit_erp.so", "so.id", "=", "so_det.id_so")->
+                    leftJoin("signalbit_erp.act_costing", "act_costing.id", "=", "so.id_cost")->
+                    where("id_year_sequence", $this->rapidReject[$i]['numberingInput'])->
+                    first();
 
                 $currentReject = null;
                 $currentRejectType = null;
@@ -594,9 +602,10 @@ class Reject extends Component
                             ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
                             ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
                             ->where('so_det.cancel', '!=', 'Y')
-                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
-                            ->where('so_det.color', $numberingData->color) // By Size & Color
-                            ->where('so_det.size', $numberingData->size) // By Size & Color
+                            ->where('ppic_master_so.po', $this->selectedPo) // By WS & Size & Color
+                            ->where('act_costing.id', $numberingData->id_ws) // By WS & Size & Color
+                            ->where('so_det.color', $numberingData->color) // By WS & Size & Color
+                            ->where('so_det.size', $numberingData->size) // By WS & Size & Color
                             ->groupBy('ppic_master_so.id')
                             ->first();
 

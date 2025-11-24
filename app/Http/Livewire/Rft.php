@@ -216,9 +216,10 @@ class Rft extends Component
                             ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
                             ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
                             ->where('so_det.cancel', '!=', 'Y')
-                            ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
-                            ->where('so_det.color', $numberingData->color) // By Size & Color
-                            ->where('so_det.size', $numberingData->size) // By Size & Color
+                            ->where('ppic_master_so.po', $this->selectedPo) // By WS & Size & Color
+                            ->where('act_costing.id', $numberingData->id_ws) // By WS & Size & Color
+                            ->where('so_det.color', $numberingData->color) // By WS & Size & Color
+                            ->where('so_det.size', $numberingData->size) // By WS & Size & Color
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
@@ -386,6 +387,7 @@ class Rft extends Component
                             ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
                             ->where('so_det.cancel', '!=', 'Y')
                             ->where('ppic_master_so.po', $this->selectedPo) // By Size & Color
+                            ->where('act_costing.id', $numberingData->id_ws) // By Size & Color
                             ->where('so_det.color', $numberingData->color) // By Size & Color
                             ->where('so_det.size', $numberingData->size) // By Size & Color
                             ->groupBy('ppic_master_so.id')
