@@ -140,7 +140,7 @@ class ProductionPanel extends Component
         $this->orderWsDetailSizes = DB::table('master_plan')->selectRaw("
                 so_det.id as so_det_id,
                 act_costing.id as id_ws,
-                so_det.color as color,
+                UPPER(TRIM(so_det.color)) as color,
                 so_det.size as size,
                 so_det.dest as dest,
                 CONCAT(so_det.size, (CASE WHEN so_det.dest != '-' OR so_det.dest IS NULL THEN CONCAT('-', so_det.dest) ELSE '' END)) as size_dest
@@ -151,7 +151,7 @@ class ProductionPanel extends Component
             ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
             ->where('master_plan.sewing_line', str_replace(" ", "_", $this->orderInfo->sewing_line))
             ->where('act_costing.kpno', $this->orderInfo->ws_number)
-            ->whereRaw('UPPER(so_det.color) = UPPER("'.$this->orderInfo->color.'")')
+            ->whereRaw('UPPER(TRIM(so_det.color)) = UPPER(TRIM("'.$this->orderInfo->color.'"))')
             ->where('master_plan.cancel', 'N')
             ->groupBy('so_det.id')
             ->orderBy('so_det_id')
@@ -442,7 +442,7 @@ class ProductionPanel extends Component
         $this->orderWsDetailSizes = DB::table('master_plan')->selectRaw("
                 so_det.id as so_det_id,
                 act_costing.id as id_ws,
-                so_det.color as color,
+                UPPER(TRIM(so_det.color)) as color,
                 so_det.size as size,
                 so_det.dest as dest,
                 CONCAT(so_det.size, (CASE WHEN so_det.dest != '-' OR so_det.dest IS NULL THEN CONCAT('-', so_det.dest) ELSE '' END)) as size_dest
@@ -453,7 +453,7 @@ class ProductionPanel extends Component
             ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
             ->where('master_plan.sewing_line', str_replace(" ", "_", $this->orderInfo->sewing_line))
             ->where('act_costing.kpno', $this->orderInfo->ws_number)
-            ->whereRaw('UPPER(so_det.color) = UPPER("'.$this->selectedColorName.'")')
+            ->whereRaw('UPPER(TRIM(so_det.color)) = UPPER(TRIM("'.$this->selectedColorName.'"))')
             ->groupBy('so_det.id')
             ->orderBy('so_det_id')
             ->get();
