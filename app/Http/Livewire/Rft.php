@@ -162,7 +162,7 @@ class Rft extends Component
 
             // One Straight Format
             $numberingData = DB::connection("mysql_nds")->table("year_sequence")->
-                selectRaw("year_sequence.*, so_det.dest, so_det.color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
+                selectRaw("year_sequence.*, so_det.dest, UPPER(TRIM(so_det.color)) as color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
                 leftJoin("signalbit_erp.so_det", "so_det.id", "=", "year_sequence.so_det_id")->
                 leftJoin("signalbit_erp.so", "so.id", "=", "so_det.id_so")->
                 leftJoin("signalbit_erp.act_costing", "act_costing.id", "=", "so.id_cost")->
@@ -189,7 +189,7 @@ class Rft extends Component
                 // $finishlineOutputData = true;
 
                 if ($finishlineOutputData) {
-                    $currentData = $this->orderWsDetailSizes->where('id_ws', $numberingData->id_ws)->where('color', $numberingData->color)->where('size', $numberingData->size)->first();
+                    $currentData = $this->orderWsDetailSizes->where('id_ws', $numberingData->id_ws)->where('color', $numberingData->color)->filter(function ($item) use ($numberingData) { return $item['size'] == $numberingData->size || $item['so_det_id'] == $numberingData->so_det_id; })->first();
 
                     if ($currentData && $this->orderInfo && (trim($currentData['color']) == trim($this->orderInfo->color))) {
                         $currentSizeInput = $this->sizeInput;
@@ -219,7 +219,7 @@ class Rft extends Component
                             ->where('ppic_master_so.po', $this->selectedPo) // By WS & Size & Color
                             ->where('act_costing.id', $numberingData->id_ws) // By WS & Size & Color
                             ->where('so_det.color', $numberingData->color) // By WS & Size & Color
-                            ->where('so_det.size', $numberingData->size) // By WS & Size & Color
+                            ->whereRaw('(so_det.size = "'.$numberingData->size.'" OR so_det.id = '.$numberingData->so_det_id.')') // By WS & Size & Color
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
