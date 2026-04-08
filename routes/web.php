@@ -31,6 +31,10 @@ Route::middleware('auth')->group(function () {
         return view('index');
     })->name('index');
 
+    Route::get('/options', function () {
+        return view('options');
+    })->name('options'); 
+
     Route::controller(ProductionController::class)->prefix('production-panel')->group(function () {
         Route::get('/index/{id}', 'index')->name('production-panel');
         Route::get('/universal', 'universal')->name('production-panel-universal');
@@ -39,6 +43,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/get-po', 'getPo')->name('get-po');
         Route::get('/get-po-size', 'getPoSize')->name('get-po-size');
         Route::get('/get-po-size-qty', 'getPoSizeQty')->name('get-po-size-qty');
+
+        // Return
+        Route::get('/return', 'return')->name('production-panel-return');
+        Route::get('/get-po-return', 'getPoReturn')->name('get-po-return');
+        Route::get('/get-ws-return', 'getWsReturn')->name('get-ws-return');
+        Route::get('/get-color-return', 'getColorReturn')->name('get-color-return');
+        Route::get('/get-size-return', 'getSizeReturn')->name('get-size-return');
+        Route::get('/get-packing-line-return', 'getPackingLineReturn')->name('get-packing-line-return');
+        Route::get('/get-qty-packing-line-return', 'getQtyPackingLineReturn')->name('get-qty-packing-line-return');
     });
 
     Route::controller(ProfileController::class)->prefix('profile')->group(function () {

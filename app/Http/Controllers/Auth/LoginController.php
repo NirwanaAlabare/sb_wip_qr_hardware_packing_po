@@ -33,12 +33,21 @@ class LoginController extends Controller
 
             session(['user_id' => Auth::user()->id, 'user_username' => Auth::user()->username, 'user_name' => Auth::user()->username]);
 
-            return array(
-                'status' => '200',
-                'message' => 'Authenticate Success',
-                'redirect' => url('/'),
-                'additional' => [],
-            );
+            if(Auth::user()->line_type == "multi"){
+                return array(
+                    'status' => '200',
+                    'message' => 'Authenticate Success',
+                    'redirect' => route('options'),
+                    'additional' => [],
+                );
+            }else{
+                return array(
+                    'status' => '200',
+                    'message' => 'Authenticate Success',
+                    'redirect' => url('/'),
+                    'additional' => [],
+                );
+            }
         }
 
         return array(
