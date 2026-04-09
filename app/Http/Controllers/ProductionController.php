@@ -265,18 +265,17 @@ class ProductionController extends Controller
     {
         $orderWsDetailsPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
                 ppic_master_so.id,
-                ppic_master_so.po,
-                ppic_master_so.qty_po AS qty_order
+                ppic_master_so.po
             ")
             ->where('ppic_master_so.po', 'like', "%".($request->search ?? "")."%")
             ->groupBy('ppic_master_so.po')
             ->get();
 
-        if (Auth::user()->line_type == "multi") {
-            $orderWsDetailsPo->push((object)[
-                'po' => 'GUDANG_STOK',
-            ]);
-        }
+        // if (Auth::user()->line_type == "multi") {
+        //     $orderWsDetailsPo->push((object)[
+        //         'po' => 'GUDANG_STOK',
+        //     ]);
+        // }
 
         return json_encode($orderWsDetailsPo);
     }
@@ -320,7 +319,10 @@ class ProductionController extends Controller
 
     public function getSizeReturn(Request $request){
         $data = DB::table('so_det')
-            ->selectRaw("so_det.size")
+            ->selectRaw("
+                so_det.size,
+                ppic_master_so.qty_po AS qty_order
+            ")
             ->leftJoin("laravel_nds.ppic_master_so", "ppic_master_so.id_so_det", "=", "so_det.id")
             ->leftJoin("so", "so.id", "=", "so_det.id_so")
             ->leftJoin("act_costing", "act_costing.id", "=", "so.id_cost")

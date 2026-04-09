@@ -56,10 +56,10 @@ class ProductionPanelReturn extends Component
         'selectedPoFinishingLine.required' => 'Line QC Finishing wajib dipilih',
         'kpno.required' => 'KP No wajib ada',
         'style.required' => 'Style wajib ada',
-        'qtyReturn.required' => 'Qty return wajib diisi',
-        'qtyReturn.numeric' => 'Qty harus angka',
-        'qtyReturn.min' => 'Qty minimal 1',
-        'qtyReturn.lte' => 'Qty return tidak boleh lebih dari qty packing line',
+        'qtyReturn.required' => 'QTY Return wajib diisi',
+        'qtyReturn.numeric' => 'QTY harus angka',
+        'qtyReturn.min' => 'QTY minimal 1',
+        'qtyReturn.lte' => 'QTY Return tidak boleh lebih dari qty packing line',
     ];
 
     public function mount()

@@ -187,7 +187,7 @@
                             @foreach ($summary as $row)
                                 <tr>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-primary" wire:click="openModal('{{ $row->tanggal }}')">
+                                        <button type="button" class="btn btn-sm btn-success" wire:click="openModal('{{ $row->tanggal }}')">
                                             <i class="fa fa-plus"></i>
                                         </button>
                                     </td>
@@ -467,7 +467,7 @@
 
                         if (response) {
                             response.forEach(item => {
-                                sizeSelect.append(`<option value="${item.size}">${item.size}</option>`);
+                                sizeSelect.append(`<option value="${item.size}" data-qtyorder="${item.qty_order}">${item.size}</option>`);
                             });
                         }
 
@@ -573,9 +573,9 @@
 
             let selectedPo = data.po;
             let selectedPoId = data.po_id;
-            let qtyOrder = data.qty_order;
+            // let qtyOrder = data.qty_order;
 
-            $('#qty_order').val(qtyOrder ?? 0);
+            // $('#qty_order').val(qtyOrder ?? 0);
 
             @this.set('selectedPo', selectedPo);
             @this.set('selectedPoId', selectedPoId);
@@ -648,6 +648,9 @@
             let selectedPoWs = $('#product-po-ws').val();
             let selectedPoColor = $('#product-po-color').val();
             let selectedPoSize = $(this).val();
+            let qtyOrder = $(this).find(':selected').data('qtyorder');
+
+            $('#qty_order').val(qtyOrder ?? 0);
 
             @this.selectedPoSize = selectedPoSize;
 
@@ -681,8 +684,6 @@
             poSelect.empty();
             poSelect.append('<option value="" selected disabled>-- Pilih PO --</option>');
             poSelect.val(null).trigger('change.select2');
-
-            $("#qty_order").val('');
         }
 
         function resetWs() {
@@ -705,6 +706,7 @@
             sizeSelect.append('<option value="" selected disabled>-- Pilih Size --</option>');
             sizeSelect.val(null).trigger('change.select2');
 
+            $("#qty_order").val('');
             $("#tot_qty_in").val('');
         }
 
