@@ -285,7 +285,7 @@
                 ajax: {
                     url: "{{ route('get-po-return') }}",
                     dataType: 'json',
-                    delay: 3000,
+                    delay: 2000,
                     data: function(params) {
                         return {
                             search: params.term,
