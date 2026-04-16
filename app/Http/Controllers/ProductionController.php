@@ -259,4 +259,126 @@ class ProductionController extends Controller
     public function temporary() {
         return view('production-panel-temporary');
     }
+
+    // Return
+    public function getPoReturn(Request $request)
+    {
+        $orderWsDetailsPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
+                ppic_master_so.id,
+                ppic_master_so.po
+            ")
+            ->where('ppic_master_so.po', 'like', "%".($request->search ?? "")."%")
+            ->groupBy('ppic_master_so.po')
+            ->get();
+
+        // if (Auth::user()->line_type == "multi") {
+        //     $orderWsDetailsPo->push((object)[
+        //         'po' => 'GUDANG_STOK',
+        //     ]);
+        // }
+
+        return json_encode($orderWsDetailsPo);
+    }
+
+    public function getWsReturn(Request $request){
+        $data = DB::table('act_costing')
+            ->selectRaw("
+                act_costing.id,
+                CONCAT(act_costing.kpno, ' - ', act_costing.styleno) AS ws,
+                act_costing.kpno,
+                act_costing.styleno AS style
+            ")
+            ->leftJoin("so", "so.id_cost", "=", "act_costing.id")
+            ->leftJoin("so_det", "so_det.id_so", "=", "so.id")
+            ->leftJoin("laravel_nds.ppic_master_so", "ppic_master_so.id_so_det", "=", "so_det.id")
+            ->where("so_det.cancel", "!=", "Y")
+            ->where("ppic_master_so.po", $request->po)
+            ->groupBy(DB::raw("CONCAT(act_costing.kpno, ' - ', act_costing.styleno)"))
+            ->get();
+
+        return json_encode($data);
+    }
+
+    public function getColorReturn(Request $request){
+        $data = DB::table('so_det')
+            ->selectRaw("
+                so_det.id,
+                so_det.color
+            ")
+            ->leftJoin("laravel_nds.ppic_master_so", "ppic_master_so.id_so_det", "=", "so_det.id")
+            ->leftJoin("so", "so.id", "=", "so_det.id_so")
+            ->leftJoin("act_costing", "act_costing.id", "=", "so.id_cost")
+            ->where("so_det.cancel", "!=", "Y")
+            ->where("ppic_master_so.po", $request->po)
+            ->whereRaw("CONCAT(act_costing.kpno, ' - ', act_costing.styleno) = ?", [$request->ws])
+            ->groupBy("so_det.color")
+            ->get();
+
+        return json_encode($data);
+    }
+
+    public function getSizeReturn(Request $request){
+        $data = DB::table('so_det')
+            ->selectRaw("
+                so_det.size,
+                ppic_master_so.qty_po AS qty_order
+            ")
+            ->leftJoin("laravel_nds.ppic_master_so", "ppic_master_so.id_so_det", "=", "so_det.id")
+            ->leftJoin("so", "so.id", "=", "so_det.id_so")
+            ->leftJoin("act_costing", "act_costing.id", "=", "so.id_cost")
+            ->where("so_det.cancel", "!=", "Y")
+            ->where("ppic_master_so.po", $request->po)
+            ->whereRaw("CONCAT(act_costing.kpno, ' - ', act_costing.styleno) = ?", [$request->ws])
+            ->where("so_det.color", $request->color)
+            ->groupBy("so_det.size")
+            ->get();
+
+        return json_encode($data);
+    }
+
+    public function getPackingLineReturn(Request $request){
+        $data = DB::table('output_rfts_packing_po')
+            ->selectRaw("
+                output_rfts_packing_po.created_by_line AS line,
+                COUNT(output_rfts_packing_po.id) as tot_qty_in
+            ")
+            ->leftJoin("laravel_nds.ppic_master_so", "ppic_master_so.id", "=", "output_rfts_packing_po.po_id")
+            ->leftJoin('so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+            ->leftJoin("so", "so.id", "=", "so_det.id_so")
+            ->leftJoin("act_costing", "act_costing.id", "=", "so.id_cost")
+            ->where("so_det.cancel", "!=", "Y")
+            ->where("ppic_master_so.po", $request->po)
+            ->whereRaw("CONCAT(act_costing.kpno, ' - ', act_costing.styleno) = ?", [$request->ws])
+            ->where("so_det.color", $request->color)
+            ->where("so_det.size", $request->size)
+            ->groupBy("output_rfts_packing_po.created_by_line")
+            ->get();
+
+        return json_encode($data);
+    }
+
+    public function getQtyPackingLineReturn(Request $request){
+        $data = DB::table('output_rfts_packing_po')
+            ->selectRaw("
+                COUNT(*) as qty_packing_line
+            ")
+            ->leftJoin("laravel_nds.ppic_master_so", "ppic_master_so.id", "=", "output_rfts_packing_po.po_id")
+            ->leftJoin('so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
+            ->leftJoin("so", "so.id", "=", "so_det.id_so")
+            ->leftJoin("act_costing", "act_costing.id", "=", "so.id_cost")
+            ->where("so_det.cancel", "!=", "Y")
+            ->whereNull('output_rfts_packing_po.reject_id')
+            ->where("ppic_master_so.po", $request->po)
+            ->whereRaw("CONCAT(act_costing.kpno, ' - ', act_costing.styleno) = ?", [$request->ws])
+            ->where("so_det.color", $request->color)
+            ->where("so_det.size", $request->size)
+            ->where("output_rfts_packing_po.created_by_line", $request->line)
+            ->first();
+
+        return json_encode($data);
+    }
+
+    public function return() {
+        return view('production-panel-return');
+    }
 }

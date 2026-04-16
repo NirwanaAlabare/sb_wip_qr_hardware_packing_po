@@ -20,6 +20,15 @@
                             <p id="input-type"></p>
                         </li>
                     </div>
+                    @if(auth()->user()->line_type == 'multi')
+                        <div class="col-md-auto">
+                            <li class="nav-item w-100">
+                                <a href="{{ route('options') }}" class="btn btn-sm btn-success">
+                                    <i class="fa fa-home"></i>
+                                </a>
+                            </li>
+                        </div>
+                    @endif
                     <div class="col-md-auto">
                         <li class="nav-item w-100">
                             <input type="date" class="form-control form-control-sm" id="tanggal" name="tanggal" value="{{ $thisOrderDate }}" {{ $disableDate == true ? "readonly" : "" }}>

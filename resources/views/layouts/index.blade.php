@@ -10,6 +10,8 @@
 
     @include('layouts.link')
 
+    @stack('styles')
+
     @yield('custom-link')
 
     <script defer src="{{ asset('alpinejs/dist/cdn.min.js') }}"></script>
