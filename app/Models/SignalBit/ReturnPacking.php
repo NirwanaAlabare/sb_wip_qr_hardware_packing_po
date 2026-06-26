@@ -26,6 +26,7 @@ class ReturnPacking extends Model
         'packing_line',
         'qty_return',
         'line_qc_finishing',
+        'kode_numbering',
         'created_by',
         'created_by_username',
         'created_by_line',

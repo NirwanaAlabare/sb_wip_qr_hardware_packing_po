@@ -261,6 +261,73 @@ class ProductionController extends Controller
     }
 
     // Return
+    public function getScannedItemReturn(Request $request)
+    {
+        $checkReturn = DB::table('output_rfts_packing_po_return')
+            ->where('kode_numbering', $request->id)
+            ->first();
+
+
+        if ($checkReturn) {
+            return response()->json([
+                'message' => 'QR sudah pernah dilakukan return'
+            ], 404);
+        }
+        
+        $data = DB::select("
+            SELECT
+                ppic_master_so.id AS ppic_master_id,
+                act_costing.id AS act_costing_id,
+                so_det.id AS so_det_id,
+                act_costing.kpno AS kpno,
+                act_costing.styleno AS style,
+                output_rfts_packing_po.kode_numbering as kode_qr,
+                ppic_master_so.po,
+                CONCAT(act_costing.kpno, ' - ', act_costing.styleno) AS worksheet_style,
+                so_det.color,
+                so_det.size,
+                output_rfts_packing_po.created_by_line AS packing_line,
+                output_rfts_packing_po.master_plan_id
+            FROM
+                output_rfts_packing_po
+            LEFT JOIN laravel_nds.ppic_master_so ON ppic_master_so.id = output_rfts_packing_po.po_id
+            LEFT JOIN so_det ON so_det.id = ppic_master_so.id_so_det
+            LEFT JOIN so ON so.id = so_det.id_so
+            LEFT JOIN act_costing ON act_costing.id = so.id_cost
+            WHERE so_det.cancel != 'Y' AND
+            output_rfts_packing_po.kode_numbering = ?
+        ", [$request->id]);
+
+
+        if (empty($data)) {
+            return response()->json([
+                'message' => 'Data QR tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json($data[0]);
+    }
+
+    public function getLineQcFinishing(Request $request)
+    {
+        $data = DB::select("
+            SELECT
+                sewing_line as line_qc_finishing
+            FROM master_plan
+            WHERE id = ?
+        ", [$request->master_plan_id]);
+
+
+        if(empty($data)){
+            return response()->json([
+                'message' => 'Line QC Finishing tidak ditemukan'
+            ], 404);
+        }
+
+
+        return response()->json($data[0]);
+    }
+
     public function getPoReturn(Request $request)
     {
         $orderWsDetailsPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
