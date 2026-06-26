@@ -15,19 +15,24 @@ class ProductionPanelReturn extends Component
 
     protected $paginationTheme = 'bootstrap'; 
 
-    public $selectedPo;
-    public $selectedPoId;
-    public $selectedPoWs;
-    public $selectedPoColor;
-    public $selectedPoSize;
-    public $selectedPoPackingLine;
-    public $selectedPoFinishingLine;
+    public $kode_qr;
+
+    public $ppic_master_id;
+    public $act_costing_id;
+    public $so_det_id;
+
+    public $po;
+    public $worksheet_style;
+
     public $kpno;
     public $style;
-    public $soDetId;
-    public $actCostingId;
-    public $qtyReturn;
-    public $qtyPackingLine;
+    public $color;
+    public $size;
+
+    public $packing_line;
+    public $line_qc_finishing;
+
+    public $qty_return;
 
     public $startDate;
     public $endDate;
@@ -36,50 +41,52 @@ class ProductionPanelReturn extends Component
     public $selectedTanggal;
 
     protected $rules = [
-        'selectedPo' => 'required',
-        'selectedPoWs' => 'required',
-        'selectedPoColor' => 'required',
-        'selectedPoSize' => 'required',
-        'selectedPoPackingLine' => 'required',
-        'selectedPoFinishingLine' => 'required',
+        'kode_qr' => 'required',
+        'po' => 'required',
+        'worksheet_style' => 'required',
+        'color' => 'required',
+        'size' => 'required',
+        'packing_line' => 'required',
+        'line_qc_finishing' => 'required',
         'kpno' => 'required',
         'style' => 'required',
-        'qtyReturn' => 'required|numeric|min:1|lte:qtyPackingLine',
+        'qty_return' => 'required|numeric|min:1',
     ];
 
     protected $messages = [
-        'selectedPo.required' => 'PO wajib dipilih',
-        'selectedPoWs.required' => 'WS wajib dipilih',
-        'selectedPoColor.required' => 'Color wajib dipilih',
-        'selectedPoSize.required' => 'Size wajib dipilih',
-        'selectedPoPackingLine.required' => 'Packing Line wajib dipilih',
-        'selectedPoFinishingLine.required' => 'Line QC Finishing wajib dipilih',
+        'kode_qr.required' => 'Kode QR wajib ada',
+        'po.required' => 'PO wajib ada',
+        'worksheet_style.required' => 'Worksheet Style wajib ada',
+        'color.required' => 'Color wajib ada',
+        'size.required' => 'Size wajib ada',
+        'packing_line.required' => 'Packing Line wajib ada',
+        'line_qc_finishing.required' => 'Line QC Finishing wajib ada',
         'kpno.required' => 'KP No wajib ada',
         'style.required' => 'Style wajib ada',
-        'qtyReturn.required' => 'QTY Return wajib diisi',
-        'qtyReturn.numeric' => 'QTY harus angka',
-        'qtyReturn.min' => 'QTY minimal 1',
-        'qtyReturn.lte' => 'QTY Return tidak boleh lebih dari qty packing line',
+        'qty_return.required' => 'QTY Return wajib diisi',
+        'qty_return.numeric' => 'QTY harus angka',
+        'qty_return.min' => 'QTY minimal 1',
     ];
+
 
     public function mount()
     {
-        $this->selectedPo = '';
-        $this->selectedPoId = '';
-        $this->selectedPoWs = '';
-        $this->selectedPoColor = '';
-        $this->selectedPoSize = '';
-        $this->selectedPoPackingLine = '';
-        $this->selectedPoFinishingLine = '';
+        $this->kode_qr = '';
+
+        $this->ppic_master_id = '';
+        $this->act_costing_id = '';
+        $this->so_det_id = '';
+        $this->po = '';
+        $this->worksheet_style = '';
         $this->kpno = '';
         $this->style = '';
-        $this->actCostingId = '';
-        $this->soDetId = '';
-        $this->qtyReturn = '';
-        $this->qtyPackingLine = '';
-
+        $this->color = '';
+        $this->size = '';
+        $this->packing_line = '';
+        $this->line_qc_finishing = '';
+        $this->qty_return = '';
         $this->startDate = Carbon::today()->format('Y-m-d');
-        $this->endDate   = Carbon::today()->format('Y-m-d');
+        $this->endDate = Carbon::today()->format('Y-m-d');
     }
 
     public function dehydrate()
@@ -93,36 +100,39 @@ class ProductionPanelReturn extends Component
         $this->validate();
 
         ReturnPacking::create([
-            'ppic_master_id' => $this->selectedPoId,
-            'act_costing_id' => $this->actCostingId,
-            'so_det_id' => $this->soDetId,
-            'po' => $this->selectedPo,
+            'ppic_master_id' => $this->ppic_master_id,
+            'act_costing_id' => $this->act_costing_id,
+            'so_det_id' => $this->so_det_id,
+            'po' => $this->po,
             'kpno' => $this->kpno,
             'style' => $this->style,
-            'color' => $this->selectedPoColor,
-            'size' => $this->selectedPoSize,
-            'packing_line' => $this->selectedPoPackingLine,
-            'qty_return' => $this->qtyReturn,
-            'line_qc_finishing' => $this->selectedPoFinishingLine,
+            'color' => $this->color,
+            'size' => $this->size,
+            'packing_line' => $this->packing_line,
+            'qty_return' => $this->qty_return,
+            'line_qc_finishing' => $this->line_qc_finishing,
+            'kode_numbering' => $this->kode_qr,
             'created_by' => Auth::user()->id,
             'created_by_username' => Auth::user()->username,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
 
+
         $this->reset([
-            'selectedPo',
-            'selectedPoId',
-            'selectedPoWs',
-            'actCostingId',
+            'kode_qr',
+            'ppic_master_id',
+            'act_costing_id',
+            'so_det_id',
+            'po',
+            'worksheet_style',
             'kpno',
             'style',
-            'selectedPoColor',
-            'soDetId',
-            'selectedPoSize',
-            'selectedPoPackingLine',
-            'qtyReturn',
-            'selectedPoFinishingLine',
+            'color',
+            'size',
+            'packing_line',
+            'line_qc_finishing',
+            'qty_return',
         ]);
 
         $this->emit('resetSelect2');
@@ -149,6 +159,7 @@ class ProductionPanelReturn extends Component
             ->paginate(10, ['*'], 'modalDetailsPage')
             ->through(function($item) {
                 $item->tanggal = $item->created_at->format('d-m-Y');
+                $item->kode_numbering = $item->kode_numbering;
                 $item->packing_line = $item->packing_line;
                 $item->po = $item->po;
                 $item->worksheet = $item->kpno;

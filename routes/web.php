@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/get-size-return', 'getSizeReturn')->name('get-size-return');
         Route::get('/get-packing-line-return', 'getPackingLineReturn')->name('get-packing-line-return');
         Route::get('/get-qty-packing-line-return', 'getQtyPackingLineReturn')->name('get-qty-packing-line-return');
+        Route::get('/get-scanned-item-return', 'getScannedItemReturn')->name('get-scanned-item-return');
+        Route::get('/get-line-qc-finishing', 'getLineQcFinishing')->name('get-line-qc-finishing');
     });
 
     Route::controller(ProfileController::class)->prefix('profile')->group(function () {
