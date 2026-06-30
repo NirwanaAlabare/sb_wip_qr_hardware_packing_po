@@ -108,6 +108,8 @@
                                         </div>
                                     </div>
 
+                                    <input type="hidden" wire:model="output_rfts_packing_po_id">
+                                    <input type="hidden" wire:model="master_plan_id">
                                     <input type="hidden" wire:model="ppic_master_id">
                                     <input type="hidden" wire:model="act_costing_id">
                                     <input type="hidden" wire:model="so_det_id">
@@ -300,23 +302,20 @@
 
                     if (response) {
 
+                        @this.set('output_rfts_packing_po_id', response.output_rfts_packing_po_id);
+                        @this.set('master_plan_id', response.master_plan_id);
                         @this.set('ppic_master_id', response.ppic_master_id);
                         @this.set('act_costing_id', response.act_costing_id);
                         @this.set('so_det_id', response.so_det_id);
-
                         @this.set('kpno', response.kpno);
                         @this.set('style', response.style);
-
                         @this.set('qty_return', 1);
-
                         @this.set('kode_qr', response.kode_qr);
                         @this.set('po', response.po);
                         @this.set('worksheet_style', response.kpno + ' - ' + response.style);
-
                         @this.set('color', response.color);
                         @this.set('size', response.size);
                         @this.set('packing_line', response.packing_line);
-
 
                         $.ajax({
                             url: "{{ route('get-line-qc-finishing') }}",

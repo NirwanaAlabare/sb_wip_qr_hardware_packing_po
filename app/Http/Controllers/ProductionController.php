@@ -267,7 +267,6 @@ class ProductionController extends Controller
             ->where('kode_numbering', $request->id)
             ->first();
 
-
         if ($checkReturn) {
             return response()->json([
                 'message' => 'QR sudah pernah dilakukan return'
@@ -276,6 +275,8 @@ class ProductionController extends Controller
         
         $data = DB::select("
             SELECT
+                output_rfts_packing_po.id AS output_rfts_packing_po_id,
+                output_rfts_packing_po.master_plan_id,
                 ppic_master_so.id AS ppic_master_id,
                 act_costing.id AS act_costing_id,
                 so_det.id AS so_det_id,
@@ -297,7 +298,6 @@ class ProductionController extends Controller
             WHERE so_det.cancel != 'Y' AND
             output_rfts_packing_po.kode_numbering = ?
         ", [$request->id]);
-
 
         if (empty($data)) {
             return response()->json([

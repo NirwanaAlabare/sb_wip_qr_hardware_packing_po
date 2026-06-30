@@ -17,27 +17,23 @@ class ProductionPanelReturn extends Component
 
     public $kode_qr;
 
+    public $output_rfts_packing_po_id;
+    public $master_plan_id;
     public $ppic_master_id;
     public $act_costing_id;
     public $so_det_id;
-
     public $po;
     public $worksheet_style;
-
     public $kpno;
     public $style;
     public $color;
     public $size;
-
     public $packing_line;
     public $line_qc_finishing;
-
     public $qty_return;
-
     public $startDate;
     public $endDate;
     public $searchSummary;
-
     public $selectedTanggal;
 
     protected $rules = [
@@ -72,7 +68,8 @@ class ProductionPanelReturn extends Component
     public function mount()
     {
         $this->kode_qr = '';
-
+        $this->output_rfts_packing_po_id = '';
+        $this->master_plan_id = '';
         $this->ppic_master_id = '';
         $this->act_costing_id = '';
         $this->so_det_id = '';
@@ -100,6 +97,8 @@ class ProductionPanelReturn extends Component
         $this->validate();
 
         ReturnPacking::create([
+            'output_rfts_packing_po_id' => $this->output_rfts_packing_po_id,
+            'master_plan_id' => $this->master_plan_id,
             'ppic_master_id' => $this->ppic_master_id,
             'act_costing_id' => $this->act_costing_id,
             'so_det_id' => $this->so_det_id,
@@ -121,6 +120,8 @@ class ProductionPanelReturn extends Component
 
         $this->reset([
             'kode_qr',
+            'output_rfts_packing_po_id',
+            'master_plan_id',
             'ppic_master_id',
             'act_costing_id',
             'so_det_id',
