@@ -15,6 +15,8 @@ class ReturnPacking extends Model
 
     protected $fillable = [
         'id',
+        'output_rfts_packing_po_id',
+        'master_plan_id',
         'ppic_master_id',
         'act_costing_id',
         'so_det_id',
