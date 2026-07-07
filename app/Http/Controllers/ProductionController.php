@@ -168,7 +168,15 @@ class ProductionController extends Controller
                     ppic_master_so.id_so_det,
                     so_det.size,
                     ppic_master_so.qty_po,
-                    COUNT(output_rfts_packing_po.id) as qty_output
+                    (
+                        COUNT(output_rfts_packing_po.id)
+                        -
+                        COALESCE((
+                            SELECT COUNT(*)
+                            FROM signalbit_erp.output_rfts_packing_po_return opr
+                            WHERE opr.master_plan_id = output_rfts_packing_po.master_plan_id
+                        ), 0)
+                    ) as qty_output
                 ")
                 ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
                 ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
