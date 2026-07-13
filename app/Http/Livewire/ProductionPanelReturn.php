@@ -4,10 +4,11 @@ namespace App\Http\Livewire;
 
 use App\Models\SignalBit\ReturnPacking;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class ProductionPanelReturn extends Component
 {
@@ -156,29 +157,77 @@ class ProductionPanelReturn extends Component
             ]);
         }
 
-        return ReturnPacking::whereDate('created_at', Carbon::createFromFormat('d-m-Y', $this->selectedTanggal))
-            ->paginate(10, ['*'], 'modalDetailsPage')
-            ->through(function($item) {
-                $item->tanggal = $item->created_at->format('d-m-Y');
-                $item->kode_numbering = $item->kode_numbering;
-                $item->packing_line = $item->packing_line;
-                $item->po = $item->po;
-                $item->worksheet = $item->kpno;
-                $item->style = $item->style;
-                $item->color = $item->color;
-                $item->size = $item->size;
-                $item->qty_return = $item->qty_return;
-                $item->qty_cek_qc = 0;
-                $item->qc_line = $item->line_qc_finishing;
-                return $item;
-            });
+        return ReturnPacking::selectRaw("
+            DATE(created_at) as tanggal,
+            packing_line,
+            po,
+            kpno,
+            style,
+            color,
+            size,
+            line_qc_finishing,
+            COUNT(*) as qty_return,
+            SUM(
+                CASE
+                    WHEN status <> 'rft'
+                    THEN 1
+                    ELSE 0
+                END
+            ) as qty_check,
+            COUNT(*) - SUM(
+                CASE
+                    WHEN status <> 'rft'
+                    THEN 1
+                    ELSE 0
+                END
+            ) as qty_blc,
+            MIN(id) as id
+        ")
+        ->whereDate(
+            'created_at',
+            Carbon::createFromFormat('d-m-Y', $this->selectedTanggal)
+        )
+        ->groupBy(
+            DB::raw('DATE(created_at)'),
+            'packing_line',
+            'po',
+            'kpno',
+            'style',
+            'color',
+            'size',
+            'line_qc_finishing'
+        )
+        ->orderBy('tanggal')
+        ->paginate(10, ['*'], 'modalDetailsPage')
+        ->through(function ($item) {
+            $item->tanggal = Carbon::parse($item->tanggal)->format('d-m-Y');
+            $item->worksheet = $item->kpno;
+            $item->qty_cek_qc = $item->qty_check;
+            $item->qc_line = $item->line_qc_finishing;
+
+            return $item;
+        });
     }
 
     public function render()
     {
         $query = ReturnPacking::selectRaw("
             DATE_FORMAT(created_at, '%d-%m-%Y') as tanggal,
-            SUM(qty_return) as qty_return
+            COUNT(*) as qty_return,
+            SUM(
+                CASE
+                    WHEN status <> 'rft'
+                    THEN 1
+                    ELSE 0
+                END
+            ) as qty_check,
+            COUNT(*) - SUM(
+                CASE
+                    WHEN status <> 'rft'
+                    THEN 1
+                    ELSE 0
+                END
+            ) as qty_blc
         ")->groupBy('tanggal');
 
         if ($this->startDate && $this->endDate) {
@@ -190,8 +239,26 @@ class ProductionPanelReturn extends Component
 
         if ($this->searchSummary) {
             $search = $this->searchSummary;
-            $query->havingRaw("tanggal LIKE ?", ["%$search%"])
-                  ->orHavingRaw("SUM(qty_return) LIKE ?", ["%$search%"]);
+            $query->havingRaw("tanggal LIKE ?", ["%{$search}%"])
+                ->orHavingRaw("COUNT(*) LIKE ?", ["%{$search}%"])
+                ->orHavingRaw("
+                    SUM(
+                        CASE
+                            WHEN status <> 'rft'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) LIKE ?
+                ", ["%{$search}%"])
+                ->orHavingRaw("
+                    COUNT(*) - SUM(
+                        CASE
+                            WHEN status <> 'rft'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) LIKE ?
+                ", ["%{$search}%"]);
         }
 
         $summary = $query->paginate(10);
