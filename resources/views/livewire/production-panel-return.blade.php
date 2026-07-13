@@ -198,8 +198,8 @@
                                     </td>
                                     <td>{{ $row->tanggal }}</td>
                                     <td>{{ $row->qty_return }}</td>
-                                    <td>0</td>
-                                    <td>0</td>
+                                    <td>{{ $row->qty_check }}</td>
+                                    <td>{{ $row->qty_blc }}</td>
                                 </tr>
                             @endforeach
                         @endif
