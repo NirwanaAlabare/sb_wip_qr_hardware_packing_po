@@ -355,7 +355,7 @@ class Reject extends Component
                 if($packingReturnRejectData){
                     $currentReject = $packingReturnRejectData;
 
-                    $currentRejectType = 'packing_return';
+                    $currentRejectType = 'qc_fns_pck_return';
                 } else if ($finishlineRejectData) {
                     $currentReject = $finishlineRejectData;
 
@@ -417,7 +417,6 @@ class Reject extends Component
 
                         if ($this->selectedPo == "GUDANG_STOK" || $currentPo) {
                             if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
-
                                 // Modify based on selected PO
                                 if ($currentPo && $currentPo->id_so_det != $numberingData->so_det_id) {
                                     $id = (int) $currentPo->id_so_det;
@@ -927,7 +926,7 @@ class Reject extends Component
             get();
 
         // Reject List
-        $allRejectList = Rft::selectRaw('output_rfts_packing_po.department as output_type, COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id) as reject_type_id, COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id) as reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
+        $allRejectList = Rft::selectRaw('output_rfts_packing_po.department as output_type, COALESCE(output_reject_packing_po_return.reject_type_id, output_rejects_packing.reject_type_id, output_rejects.reject_type_id) as reject_type_id, COALESCE(output_reject_packing_po_return.reject_area_id, output_rejects_packing.reject_area_id, output_rejects.reject_area_id) as reject_area_id, output_defect_types.defect_type, output_defect_areas.defect_area, count(*) as total')->
             leftJoin('master_plan', 'master_plan.id', '=', 'output_rfts_packing_po.master_plan_id')->
             leftJoin('output_rejects', function ($join) {
                 $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects.id');
@@ -937,8 +936,12 @@ class Reject extends Component
                 $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects_packing.id');
                 $join->on('output_rfts_packing_po.department', '=', DB::raw('"packing"'));
             })->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id)'))->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id)'))->
+            leftJoin('output_reject_packing_po_return', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_reject_packing_po_return.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc_fns_pck_return"'));
+            })->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_reject_packing_po_return.reject_type_id, output_rejects_packing.reject_type_id, output_rejects.reject_type_id)'))->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_reject_packing_po_return.reject_area_id, output_rejects_packing.reject_area_id, output_rejects.reject_area_id)'))->
             where("output_rfts_packing_po.type", "reject")->
             where('master_plan.id', $this->orderInfo->id)->
             whereRaw("
@@ -997,9 +1000,31 @@ class Reject extends Component
                 output_rejects_packing.reject_status LIKE '%".$this->searchRejectIn."%'
             )")->
             orderBy('output_rejects_packing.updated_at', 'desc');
-        $rejectIn = $rejectsQc->union($rejectsPacking)->paginate(10, ['*'], 'rejectInPage');
+        $rejectsPackingReturn = DB::table('output_reject_packing_po_return')->selectRaw('output_reject_packing_po_return.id, master_plan.sewing_line, output_reject_packing_po_return.kode_numbering, output_reject_packing_po_return.updated_at, output_reject_packing_po_return.created_at, output_reject_packing_po_return.reject_area_x, output_reject_packing_po_return.reject_area_y, output_reject_packing_po_return.reject_status, "qc_fns_pck_return" as output_type, output_defect_types.defect_type, output_defect_areas.defect_area, so_det.size as so_det_size')->
+            leftJoin('master_plan', 'master_plan.id', '=', 'output_reject_packing_po_return.master_plan_id')->
+            leftJoin('so_det', 'so_det.id', '=', 'output_reject_packing_po_return.so_det_id')->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', 'output_reject_packing_po_return.reject_area_id')->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', 'output_reject_packing_po_return.reject_type_id')->
+            leftJoin('output_rfts_packing_po', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_reject_packing_po_return.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc_fns_pck_return"'));
+            })->
+            whereNull('output_rfts_packing_po.id')->
+            where('master_plan.tgl_plan', $this->orderInfo->tgl_plan)->
+            where('master_plan.id_ws', $this->orderInfo->id_ws)->
+            where('master_plan.color', $this->orderInfo->color)->
+            whereRaw("(
+                'qc_fns_pck_return' LIKE '%".$this->searchRejectIn."%' OR
+                output_reject_packing_po_return.id LIKE '%".$this->searchRejectIn."%' OR
+                so_det.size LIKE '%".$this->searchRejectIn."%' OR
+                output_defect_areas.defect_area LIKE '%".$this->searchRejectIn."%' OR
+                output_defect_types.defect_type LIKE '%".$this->searchRejectIn."%' OR
+                output_reject_packing_po_return.reject_status LIKE '%".$this->searchRejectIn."%'
+            )")->
+            orderBy('output_reject_packing_po_return.updated_at', 'desc');
+        $rejectIn = $rejectsQc->union($rejectsPacking)->union($rejectsPackingReturn)->paginate(10, ['*'], 'rejectInPage');
 
-        $rejects = Rft::selectRaw('output_rfts_packing_po.*, ppic_master_so.po, COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id) as reject_type_id, COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id) as reject_area_id, COALESCE(output_rejects_packing.reject_area_x, output_rejects.reject_area_x) as reject_area_x, COALESCE(output_rejects_packing.reject_area_y, output_rejects.reject_area_y) as reject_area_y, output_defect_types.defect_type, output_defect_areas.defect_area, UPPER(output_rfts_packing_po.status) as reject_status, so_det.size as so_det_size')->
+        $rejects = Rft::selectRaw('output_rfts_packing_po.*, ppic_master_so.po, COALESCE(output_reject_packing_po_return.reject_type_id, output_rejects_packing.reject_type_id, output_rejects.reject_type_id) as reject_type_id, COALESCE(output_reject_packing_po_return.reject_area_id, output_rejects_packing.reject_area_id, output_rejects.reject_area_id) as reject_area_id, COALESCE(output_reject_packing_po_return.reject_area_x, output_rejects_packing.reject_area_x, output_rejects.reject_area_x) as reject_area_x, COALESCE(output_reject_packing_po_return.reject_area_y, output_rejects_packing.reject_area_y, output_rejects.reject_area_y) as reject_area_y, output_defect_types.defect_type, output_defect_areas.defect_area, UPPER(output_rfts_packing_po.status) as reject_status, so_det.size as so_det_size')->
             leftJoin('output_rejects', function ($join) {
                 $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects.id');
                 $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc"'));
@@ -1008,8 +1033,12 @@ class Reject extends Component
                 $join->on('output_rfts_packing_po.reject_id', '=', 'output_rejects_packing.id');
                 $join->on('output_rfts_packing_po.department', '=', DB::raw('"packing"'));
             })->
-            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_type_id, output_rejects.reject_type_id)'))->
-            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_rejects_packing.reject_area_id, output_rejects.reject_area_id)'))->
+            leftJoin('output_reject_packing_po_return', function ($join) {
+                $join->on('output_rfts_packing_po.reject_id', '=', 'output_reject_packing_po_return.id');
+                $join->on('output_rfts_packing_po.department', '=', DB::raw('"qc_fns_pck_return"'));
+            })->
+            leftJoin('output_defect_types', 'output_defect_types.id', '=', DB::raw('COALESCE(output_reject_packing_po_return.reject_type_id, output_rejects_packing.reject_type_id, output_rejects.reject_type_id)'))->
+            leftJoin('output_defect_areas', 'output_defect_areas.id', '=', DB::raw('COALESCE(output_reject_packing_po_return.reject_area_id, output_rejects_packing.reject_area_id, output_rejects.reject_area_id)'))->
             leftJoin('so_det', 'so_det.id', '=', 'output_rfts_packing_po.so_det_id')->
             leftJoin('laravel_nds.ppic_master_so', 'ppic_master_so.id', '=', 'output_rfts_packing_po.po_id')->
             where('output_rfts_packing_po.type', 'reject')->
