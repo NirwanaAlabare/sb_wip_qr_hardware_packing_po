@@ -126,7 +126,16 @@
                                             <tr>
                                                 <td>{{ $rejectList->defect_type }}</td>
                                                 <td>{{ $rejectList->defect_area }}</td>
-                                                <td>{{ strtoupper($rejectList->output_type == "packing" ? "finishing" : $rejectList->output_type) }}</td>
+                                                @php
+                                                    $outputType = $rejectList->output_type;
+
+                                                    if ($outputType == 'packing') {
+                                                        $outputType = 'finishing';
+                                                    } elseif ($outputType == 'qc_fns_pck_return') {
+                                                        $outputType = 'QC FNS - PCK RETURN';
+                                                    }
+                                                @endphp
+                                                <td>{{ strtoupper($outputType) }}</td>
                                                 <td><b>{{$rejectList->total}}</b></td> 
                                                 <td class="d-none">
                                                     <div wire:loading>
@@ -190,7 +199,16 @@
                             @foreach ($rejectIn as $reject)
                                 <tr>
                                     <td>{{ $rejectIn->firstItem() + $loop->index }}</td>
-                                    <td>{{ strtoupper($reject->output_type == "packing" ? "finishing" : $reject->output_type) }}</td>
+                                    @php
+                                        $outputType = $reject->output_type;
+
+                                        if ($outputType == 'packing') {
+                                            $outputType = 'finishing';
+                                        } elseif ($outputType == 'qc_fns_pck_return') {
+                                            $outputType = 'QC FNS - PCK RETURN';
+                                        }
+                                    @endphp
+                                    <td>{{ strtoupper($outputType) }}</td>
                                     <td>{{ strtoupper(str_replace("_", " ", $reject->sewing_line)) }}</td>
                                     <td>{{ $reject->updated_at ? $reject->created_at : $reject->updated_at }}</td>
                                     <td>{{ $reject->kode_numbering ? $reject->kode_numbering : '-' }}</td>
@@ -262,7 +280,16 @@
                             @foreach ($rejects as $reject)
                                 <tr>
                                     <td>{{ $rejects->firstItem() + $loop->index }}</td>
-                                    <td>{{ strtoupper($reject->department == "packing" ? "finishing" : $reject->department) }}</td>
+                                    @php
+                                        $outputType = $reject->department;
+
+                                        if ($outputType == 'packing') {
+                                            $outputType = 'finishing';
+                                        } elseif ($outputType == 'qc_fns_pck_return') {
+                                            $outputType = 'QC FNS - PCK RETURN';
+                                        }
+                                    @endphp
+                                    <td>{{ strtoupper($outputType) }}</td>
                                     <td>{{ strtoupper(str_replace("_", " ", $reject->created_by_line)) }}</td>
                                     <td>{{ $reject->updated_at ? $reject->created_at : $reject->updated_at }}</td>
                                     <td>{{ $reject->kode_numbering ? $reject->kode_numbering : '-' }}</td>
