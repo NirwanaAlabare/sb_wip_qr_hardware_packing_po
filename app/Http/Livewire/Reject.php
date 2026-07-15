@@ -569,8 +569,13 @@ class Reject extends Component
                 $currentReject = null;
                 $currentRejectType = null;
 
+                $packingReturnRejectData = DB::connection('mysql_sb')->table('output_reject_packing_po_return')->where("kode_numbering", $this->numberingInput)->first();
                 $finishlineRejectData = DB::connection('mysql_sb')->table('output_rejects_packing')->where("kode_numbering", $this->numberingInput)->first();
-                if ($finishlineRejectData) {
+                if($packingReturnRejectData){
+                    $currentReject = $packingReturnRejectData;
+
+                    $currentRejectType = 'qc_fns_pck_return';
+                } else if ($finishlineRejectData) {
                     $currentReject = $finishlineRejectData;
 
                     $currentRejectType = 'packing';
