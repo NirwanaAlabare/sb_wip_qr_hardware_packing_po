@@ -124,14 +124,14 @@ class Reject extends Component
         $this->resetErrorBag();
     }
 
-    private function checkIfNumberingExists($numberingInput = null): bool
+    private function checkIfNumberingExists($numberingInput = null, $currentRejectType): bool
     {
-        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "rft")->exists()) {
+        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "rft")->where('department', $currentRejectType)->exists()) {
             $this->addError('numberingInput', 'Kode QR sudah discan di RFT.');
             return true;
         }
 
-        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "reject")->exists()) {
+        if (DB::table('output_rfts_packing_po')->where('kode_numbering', ($numberingInput ?? $this->numberingInput))->where("type", "reject")->where('department', $currentRejectType)->exists()) {
             $this->addError('numberingInput', 'Kode QR sudah discan di Reject.');
             return true;
         }
@@ -347,17 +347,16 @@ class Reject extends Component
                     return $this->emit('alert', 'error', "QR belum terdaftar.");
                 }
 
-                $validatedData = $this->validate();
-
-                if ($this->checkIfNumberingExists($numberingInput)) {
-                    return;
-                }
-
                 $currentReject = null;
                 $currentRejectType = null;
 
+                $packingReturnRejectData = DB::connection('mysql_sb')->table('output_reject_packing_po_return')->where("kode_numbering", $this->numberingInput)->first();
                 $finishlineRejectData = DB::connection('mysql_sb')->table('output_rejects_packing')->where("kode_numbering", $this->numberingInput)->first();
-                if ($finishlineRejectData) {
+                if($packingReturnRejectData){
+                    $currentReject = $packingReturnRejectData;
+
+                    $currentRejectType = 'packing_return';
+                } else if ($finishlineRejectData) {
                     $currentReject = $finishlineRejectData;
 
                     $currentRejectType = 'packing';
@@ -374,6 +373,12 @@ class Reject extends Component
                             $currentRejectType = 'qc';
                         }
                     }
+                }
+
+                $validatedData = $this->validate();
+
+                if ($this->checkIfNumberingExists($numberingInput, $currentRejectType)) {
+                    return;
                 }
 
                 if ($currentReject) {
