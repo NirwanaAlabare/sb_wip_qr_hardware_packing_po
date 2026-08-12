@@ -471,7 +471,7 @@ class Rft extends Component
         $this->emit('setSelectedSizeSelect2', $this->selectedColor);
 
         // Rft
-        $this->rft = collect(DB::select("select output_rfts_packing_po.*, so_det.size, COUNT(output_rfts_packing_po.id) output from `output_rfts_packing_po` left join `so_det` on `so_det`.`id` = `output_rfts_packing_po`.`so_det_id` where `master_plan_id` = '".$this->orderInfo->id."' and `status` = 'NORMAL' group by so_det.id"));
+        $this->rft = collect(DB::select("select output_rfts_packing_po.*, so_det.size, COUNT(output_rfts_packing_po.id) output from `output_rfts_packing_po` left join `so_det` on `so_det`.`id` = `output_rfts_packing_po`.`so_det_id` where `master_plan_id` = '".$this->orderInfo->id."' and output_rfts_packing_po.updated_at between '".date("Y-m-d")." 00:00:00' and '".date("Y-m-d")." 23:59:59' and `status` = 'NORMAL' group by so_det.id"));
 
         return view('livewire.rft');
     }

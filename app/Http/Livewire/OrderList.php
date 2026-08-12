@@ -261,6 +261,7 @@ class OrderList extends Component
                         left join
                             output_rfts_packing_po on output_rfts_packing_po.master_plan_id = master_plan.id
                         where
+                            output_rfts_packing_po.updated_at BETWEEN '".$this->date." 00:00:00' and '".$this->date." 23:59:59' AND
                             (".$lineFilter." ".($this->filterLine ? "AND master_plan.sewing_line = '".str_replace(" ", "_", strtoupper($this->filterLine))."'" : "")." ) AND
                             (master_plan.tgl_plan = '".$this->date."' $additionalQuery) AND
                             master_plan.cancel = 'N'
