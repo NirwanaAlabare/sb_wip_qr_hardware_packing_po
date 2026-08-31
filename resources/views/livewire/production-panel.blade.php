@@ -55,14 +55,14 @@
         </div>
         <div class="col-md-12">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="mb-1" wire:ignore>
                         <label class="form-label mb-0">PO</label>
                         <select class="select2 form-select-sm" id="product-po" >
                         </select>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-8">
                     <div class="row row-gap-1">
                         <div class="col-md-4 mb-1" wire:ignore>
                             <label class="form-label mb-0">Size</label>
