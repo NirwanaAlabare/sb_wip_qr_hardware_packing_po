@@ -148,15 +148,31 @@ class ProductionController extends Controller
 
     public function getPoSizeQty(Request $request)
     {
+        $from = date("Y-m-d")." 00:00:00";
+        $to = date("Y-m-d")." 23:59:59";
+
         if ($request->po == "GUDANG_STOK") {
             $orderWsDetailsPoSizeQty = DB::table("so_det")->selectRaw("
                     '-' as po,
                     so_det.id as id_so_det,
                     so_det.size,
                     '-' as qty_po,
+                    COALESCE(output.qty_output_current, 0) qty_output_current,
                     COUNT(output_gudang_stok.id) as qty_output
                 ")
                 ->leftJoin('output_gudang_stok', 'output_gudang_stok.so_det_id', '=', 'so_det.id')
+                ->leftJoin(DB::raw("(
+                    SELECT
+                        so_det.id so_det_id, COUNT(output_gudang_stok.id) qty_output_current
+                    FROM so_det
+                    left join output_gudang_stok on output_gudang_stok.so_det_id = so_det.id
+                    where
+                        so_det.id = '".$request->po_id."' and
+                        output_rfts_packing_po.created_by = '".Auth::user()->id."' and
+                        output_rfts_packing_po.created_at between '".$from."' and '".$to."'
+                    group by
+                        so_det.id
+                ) as output"), "output.so_det_id", "=", "so_det.id")
                 ->whereNotNull('output_gudang_stok.packing_po_id')
                 ->where('so_det.cancel', '!=', 'Y')
                 ->where('so_det.id', $request->po_id)
@@ -168,6 +184,7 @@ class ProductionController extends Controller
                     ppic_master_so.id_so_det,
                     so_det.size,
                     ppic_master_so.qty_po,
+                    COALESCE(output.qty_output_current, 0) qty_output_current,
                     (
                         COUNT(output_rfts_packing_po.id)
                         -
@@ -185,6 +202,18 @@ class ProductionController extends Controller
                 ->leftJoin('signalbit_erp.mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
                 ->leftJoin('signalbit_erp.master_size_new', 'master_size_new.size', '=', 'so_det.size')
                 ->leftJoin('signalbit_erp.masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+                ->leftJoin(DB::raw("(
+                    SELECT
+                        ppic_master_so.id po_id, COUNT(output_rfts_packing_po.id) qty_output_current
+                    FROM ppic_master_so
+                    left join signalbit_erp.output_rfts_packing_po on output_rfts_packing_po.po_id = ppic_master_so.id
+                    where
+                        ppic_master_so.id = '".$request->po_id."' and
+                        output_rfts_packing_po.created_by = '".Auth::user()->id."' and
+                        output_rfts_packing_po.created_at between '".$from."' and '".$to."'
+                    group by
+                        ppic_master_so.id
+                ) as output"), "output.po_id", "=", "ppic_master_so.id")
                 ->where('so_det.cancel', '!=', 'Y')
                 ->where('ppic_master_so.id', $request->po_id)
                 ->groupBy('ppic_master_so.po', 'ppic_master_so.id_so_det', 'so_det.size')
@@ -280,7 +309,7 @@ class ProductionController extends Controller
                 'message' => 'QR sudah pernah dilakukan return'
             ], 404);
         }
-        
+
         $data = DB::select("
             SELECT
                 output_rfts_packing_po.id AS output_rfts_packing_po_id,

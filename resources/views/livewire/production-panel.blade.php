@@ -69,13 +69,21 @@
                             <select class="select2 form-select-sm" id="product-po-id">
                             </select>
                         </div>
-                        <div class="col-md-4 mb-1" wire:ignore>
-                            <label class="form-label mb-0">QTY PO</label>
-                            <input class="form-control form-control-sm" id="product-po-qty" readonly />
-                        </div>
-                        <div class="col-md-4 mb-1" wire:ignore>
-                            <label class="form-label mb-0">QTY OUTPUT</label>
-                            <input class="form-control form-control-sm" id="product-po-output" readonly />
+                        <div class="col-md-8 mb-1">
+                            <div class="row justify-content-evenly">
+                                <div class="col-md-4 mb-1" wire:ignore>
+                                    <label class="form-label mb-0">QTY PO</label>
+                                    <input class="form-control form-control-sm" id="product-po-qty" readonly />
+                                </div>
+                                <div class="col-md-4 mb-1" wire:ignore>
+                                    <label class="form-label mb-0 fw-bold">QTY OUTPUT TOTAL</label>
+                                    <input class="form-control form-control-sm fw-bold" id="product-po-output" readonly />
+                                </div>
+                                <div class="col-md-4 mb-1" wire:ignore>
+                                    <label class="form-label mb-0">QTY OUTPUT TODAY</label>
+                                    <input class="form-control form-control-sm" id="product-po-output-current" readonly />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -595,9 +603,11 @@
                     if (response) {
                         document.getElementById('product-po-qty').value = response.qty_po;
                         document.getElementById('product-po-output').value = response.qty_output;
+                        document.getElementById('product-po-output-current').value = response.qty_output_current;
                     } else {
                         document.getElementById('product-po-qty').value = "";
                         document.getElementById('product-po-output').value = "";
+                        document.getElementById('product-po-output-current').value = "";
                     }
 
                     Livewire.emit("qrInputFocus", (@this.rft ? 'rft' : (@this.reject ? 'reject' : '')));
@@ -605,6 +615,7 @@
                 error: function(jqXHR) {
                     document.getElementById('product-po-qty').value = "";
                     document.getElementById('product-po-output').value = "";
+                    document.getElementById('product-po-output-current').value = "";
                 }
             });
         }

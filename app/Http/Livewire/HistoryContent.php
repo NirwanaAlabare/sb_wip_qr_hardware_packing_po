@@ -65,7 +65,7 @@ class HistoryContent extends Component
             if ($this->masterPlan) {
                 $latestOutputRfts->where('master_plan.id', $this->masterPlan);
             }
-        $latestRfts = $latestOutputRfts->whereRaw("DATE(output_rfts_packing_po.created_at) BETWEEN '".$this->dateFrom."' AND '".$this->dateTo."'")->
+        $latestRfts = $latestOutputRfts->whereRaw("output_rfts_packing_po.created_at BETWEEN '".$this->dateFrom." 00:00:00' AND '".$this->dateTo." 23:59:59'")->
             // whereRaw("master_plan.tgl_plan BETWEEN '".$this->dateFrom."' AND '".$this->dateTo."'")->
             groupBy("output_rfts_packing_po.updated_at", "so_det.size")->
             orderBy("output_rfts_packing_po.updated_at", "desc")->
