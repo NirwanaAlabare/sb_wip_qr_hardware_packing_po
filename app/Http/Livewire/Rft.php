@@ -146,6 +146,11 @@ class Rft extends Component
 
         $numberingInput = $value;
 
+        // Different Line
+        if ($this->orderInfo && $this->orderInfo->sewing_line != (Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username)) {
+            return $this->emit('differentLine', (Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username), $this->orderInfo->sewing_line);
+        }
+
         if ($numberingInput) {
             // if (str_contains($numberingInput, 'WIP')) {
             //     $numberingData = DB::connection("mysql_nds")->table("stocker_numbering")->where("kode", $numberingInput)->first();

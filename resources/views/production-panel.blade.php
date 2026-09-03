@@ -101,6 +101,19 @@
             showNotification(type, message);
         });
 
+        Livewire.on('differentLine', (lineActual, linePlan) => {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Line dari master plan berbeda',
+                html: `Line saat ini : '`+lineActual+`' <br> Line master plan : '`+linePlan+`' <br> Akan kembali ke order list`,
+                showConfirmButton: true,
+                confirmButtonText: 'Oke',
+                confirmButtonColor: '#ff971f',
+            }).then(() => {
+                window.location.href = '{{ route('index') }}'
+            });
+        });
+
         Livewire.on('showModal', (type, additional) => {
             // if (type == 'defect') {
             //     if (additional) {
