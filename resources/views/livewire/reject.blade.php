@@ -136,7 +136,7 @@
                                                     }
                                                 @endphp
                                                 <td>{{ strtoupper($outputType) }}</td>
-                                                <td><b>{{$rejectList->total}}</b></td> 
+                                                <td><b>{{$rejectList->total}}</b></td>
                                                 <td class="d-none">
                                                     <div wire:loading>
                                                         <div class="loading-small"></div>

@@ -188,11 +188,40 @@
             }
         });
 
+        function temporaryPackingActivation(type) {
+            const targetValue = "TEMPORARY_PACKING";
+
+            if (type === 'reject') {
+                // 1. Disable option target
+                $('#product-po option[value="' + targetValue + '"]').prop('disabled', true);
+
+                // 2. Jika opsi yang di-disable sedang terpilih, alihkan ke opsi pertama yang aktif
+                if ($('#product-po').val() === targetValue || $('#product-po').val() === null) {
+                    // Cari value dari option pertama yang tidak disabled
+                    const firstValidValue = $('#product-po option:not(:disabled):first').val();
+
+                    // Set nilainya ke opsi pertama tersebut
+                    $('#product-po').val(firstValidValue).trigger("change");
+                }
+
+            } else {
+                // Enable kembali option target
+                $('#product-po option[value="' + targetValue + '"]').prop('disabled', false);
+            }
+
+            // 3. Trigger change & refresh Select2
+            $('#product-po').trigger('change').trigger('change.select2');
+        }
+
         Livewire.on('fromInputPanel', (type) => {
+            temporaryPackingActivation(type);
+
             $('#input-type').hide();
         });
 
         Livewire.on('toInputPanel', (type) => {
+            temporaryPackingActivation(type);
+
             if (type == 'defect-history') {
                 type = 'defect';
             }

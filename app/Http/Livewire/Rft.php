@@ -236,8 +236,8 @@ class Rft extends Component
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
-                        if ($this->selectedPo == "GUDANG_STOK" || $currentPo) {
-                            if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
+                        if ($this->selectedPo == "TEMPORARY_PACKING" || $currentPo) {
+                            if ($this->selectedPo == "TEMPORARY_PACKING" || $currentPo->qty_output < $currentPo->qty_po) {
 
                                 // Modify based on selected PO
                                 if ($currentPo && $currentPo->id_so_det != $numberingData->so_det_id) {
@@ -271,7 +271,7 @@ class Rft extends Component
                                     'po_id' => $currentPo ? $currentPo->id : NULL,
                                     'kode_numbering' => $numberingInput,
                                     'status' => 'NORMAL',
-                                    'alokasi' => $currentPo ? "po" : "gudang stok",
+                                    'alokasi' => $currentPo ? "po" : "temporary packing",
                                     'rft_id' => $finishlineOutputData ? $finishlineOutputData->id : NULL,
                                     'type' => 'rft',
                                     'department' => 'packing',
@@ -283,7 +283,7 @@ class Rft extends Component
                                 ]);
 
                                 if ($insertRft) {
-                                    if ($this->selectedPo == "GUDANG_STOK") {
+                                    if ($this->selectedPo == "TEMPORARY_PACKING") {
                                         OutputGudangStok::create([
                                             'kode_numbering' => $numberingInput,
                                             'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,

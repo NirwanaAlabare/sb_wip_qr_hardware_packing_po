@@ -526,12 +526,14 @@
         });
 
         function getPo() {
+            let currentValue = $("#product-po").val();
             $.ajax({
                 type: "get",
                 url: "{{ route('get-po') }}",
                 data: {
                     ws_number: $("#ws-number").val(),
-                    color: $('#product-color').find(':selected').data('color-name')
+                    color: $('#product-color').find(':selected').data('color-name'),
+                    is_reject: @this.reject ? 1 : 0
                 },
                 dataType: "json",
                 success: function (response) {
@@ -546,7 +548,16 @@
                         });
 
                         if (response.length > 0) {
-                            $("#product-po").val(response[0].po).trigger("change");
+                            if (currentValue) {
+                                $("#product-po").val(currentValue).trigger("change");
+                            } else {
+                                $("#product-po").val(response[0].po).trigger("change");
+                            }
+
+                            const $select = $('#product-po');
+                            if ($select.data('select2') && $select.data('select2').isOpen()) {
+                                $select.select2('close');
+                            }
                         }
                     }
 
@@ -605,9 +616,9 @@
                         document.getElementById('product-po-output').value = response.qty_output;
                         document.getElementById('product-po-output-current').value = response.qty_output_current;
                     } else {
-                        document.getElementById('product-po-qty').value = "";
-                        document.getElementById('product-po-output').value = "";
-                        document.getElementById('product-po-output-current').value = "";
+                        document.getElementById('product-po-qty').value = "-";
+                        document.getElementById('product-po-output').value = "0";
+                        document.getElementById('product-po-output-current').value = "0";
                     }
 
                     Livewire.emit("qrInputFocus", (@this.rft ? 'rft' : (@this.reject ? 'reject' : '')));

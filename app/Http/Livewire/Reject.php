@@ -415,8 +415,8 @@ class Reject extends Component
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
-                        if ($this->selectedPo == "GUDANG_STOK" || $currentPo) {
-                            if ($this->selectedPo == "GUDANG_STOK" || $currentPo->qty_output < $currentPo->qty_po) {
+                        if ($this->selectedPo == "TEMPORARY_PACKING" || $currentPo) {
+                            if ($this->selectedPo == "TEMPORARY_PACKING" || $currentPo->qty_output < $currentPo->qty_po) {
                                 // Modify based on selected PO
                                 if ($currentPo && $currentPo->id_so_det != $numberingData->so_det_id) {
                                     $id = (int) $currentPo->id_so_det;
@@ -449,7 +449,7 @@ class Reject extends Component
                                     'po_id' => $currentPo ? $currentPo->id : NULL,
                                     'kode_numbering' => $numberingInput,
                                     'status' => $currentReject ? $currentReject->reject_status : "NORMAL",
-                                    'alokasi' => $currentPo ? "po" : "gudang stok",
+                                    'alokasi' => $currentPo ? "po" : "temporary packing",
                                     'reject_id' => $currentReject ? $currentReject->id : NULL,
                                     'type' => 'reject',
                                     'department' => $currentRejectType,
@@ -461,7 +461,7 @@ class Reject extends Component
                                 ]);
 
                                 if ($insertReject) {
-                                    if ($this->selectedPo == "GUDANG_STOK") {
+                                    if ($this->selectedPo == "TEMPORARY_PACKING") {
                                         OutputGudangStok::create([
                                             'kode_numbering' => $numberingInput,
                                             'so_det_id' => $currentPo ? $currentPo->id_so_det : $currentSizeInput,
@@ -626,7 +626,7 @@ class Reject extends Component
                             'po_id' => $currentPo ? $currentPo->id : NULL,
                             'kode_numbering' => $this->rapidReject[$i]['numberingInput'],
                             'status' => 'NORMAL',
-                            'alokasi' => $currentPo ? "po" : "gudang stok",
+                            'alokasi' => $currentPo ? "po" : "temporary packing",
                             'reject_id' => $currentReject ? $currentReject->id : NULL,
                             'type' => 'reject',
                             'department' => $currentRejectType,
