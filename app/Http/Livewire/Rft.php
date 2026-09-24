@@ -414,7 +414,7 @@ class Rft extends Component
                             'no_cut_size' => $numberingData->no_cut_size,
                             'kode_numbering' => $this->rapidRft[$i]['numberingInput'],
                             'status' => 'NORMAL',
-                            'alokasi' => $currentPo ? 'po' : 'gudang stok',
+                            'alokasi' => $currentPo ? 'po' : 'temporary packing',
                             'rft_id' => $finishlineOutputData ? $finishlineOutputData->id : NULL,
                             'type' => 'rft',
                             'department' => 'packing',
