@@ -134,9 +134,9 @@
                                 </div>
                             @enderror
                             <div class="d-flex align-items-center mb-1">
-                                <button type="button" class="btn btn-sm btn-light rounded-0 me-1" wire:click="$emit('showModal', 'addDefectType')">
+                                <!-- <button type="button" class="btn btn-sm btn-light rounded-0 me-1" wire:click="$emit('showModal', 'addDefectType')">
                                     <i class="fa-regular fa-plus fa-xs"></i>
-                                </button>
+                                </button> -->
                                 <label class="form-label me-1 mb-0">Defect Type</label>
                             </div>
                             <div wire:ignore id="select-defect-type-container">
@@ -160,9 +160,9 @@
                                 </div>
                             @enderror
                             <div class="d-flex align-items-center mb-1">
-                                <button type="button" class="btn btn-sm btn-light rounded-0 me-1" wire:click="$emit('showModal', 'addDefectArea')">
+                                <!-- <button type="button" class="btn btn-sm btn-light rounded-0 me-1" wire:click="$emit('showModal', 'addDefectArea')">
                                     <i class="fa-regular fa-plus fa-xs"></i>
-                                </button>
+                                </button> -->
                                 <label class="form-label me-1 mb-0">Defect Area</label>
                             </div>
                             <div class="d-flex gap-1">
