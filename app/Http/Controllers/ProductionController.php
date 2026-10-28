@@ -194,6 +194,8 @@ class ProductionController extends Controller
                             SELECT COUNT(*)
                             FROM signalbit_erp.output_rfts_packing_po_return opr
                             WHERE opr.master_plan_id = output_rfts_packing_po.master_plan_id
+                            AND opr.ppic_master_id = output_rfts_packing_po.po_id
+                            AND opr.so_det_id = output_rfts_packing_po.so_det_id
                         ), 0)
                     ) as qty_output
                 ")
