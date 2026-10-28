@@ -15,9 +15,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use DB;
+use App\Traits\ChecksMasterPlanCancel;
 
 class Rft extends Component
 {
+    use ChecksMasterPlanCancel;
+
     public $orderInfo;
     public $orderWsDetailSizes;
 
@@ -145,6 +148,10 @@ class Rft extends Component
         $this->emit('qrInputFocus', 'rft');
 
         $numberingInput = $value;
+
+        if ($this->masterPlanCancelled()) {
+            return;
+        }
 
         // Different Line
         if ($this->orderInfo && $this->orderInfo->sewing_line != (Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username)) {
@@ -348,6 +355,10 @@ class Rft extends Component
 
     public function submitRapidInput() {
         ini_set('memory_limit', '2048M');
+
+        if ($this->masterPlanCancelled()) {
+            return;
+        }
 
         $rapidRftFiltered = [];
         $rapidRftFilteredNds = [];

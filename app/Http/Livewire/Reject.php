@@ -14,12 +14,14 @@ use App\Models\SignalBit\MasterPlan;
 use App\Models\SignalBit\OutputGudangStok;
 use App\Models\Nds\Numbering;
 use Carbon\Carbon;
+use App\Traits\ChecksMasterPlanCancel;
 use Validator;
 use DB;
 
 class Reject extends Component
 {
     use WithPagination;
+    use ChecksMasterPlanCancel;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -314,6 +316,10 @@ class Reject extends Component
 
         $numberingInput = $value;
 
+        if ($this->masterPlanCancelled()) {
+            return;
+        }
+
         if ($numberingInput) {
             // if (str_contains($numberingInput, 'WIP')) {
             //     $numberingData = DB::connection("mysql_nds")->table("stocker_numbering")->where("kode", $numberingInput)->first();
@@ -542,6 +548,10 @@ class Reject extends Component
 
     public function submitRapidInput() {
         ini_set('memory_limit', '2048M');
+
+        if ($this->masterPlanCancelled()) {
+            return;
+        }
 
         $rapidRejectFiltered = [];
         $rapidRejectFilteredNds = [];
