@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <div class="w-100" wire:loading wire:target='search, date, filterLine, filterBuyer, filterWs, filterProductType, filterStyle'>
+    <div class="w-100" wire:loading wire:target='search, date, filterLine, filterBuyer, filterWs, filterProductType, filterStyle, filterColor'>
         <div class="loading-container">
             <div class="loading"></div>
         </div>
@@ -26,7 +26,7 @@
         </p>
     </div>
 
-    <div class="order-list row row-gap-3 mb-3 h-100" wire:loading.remove wire:target='search, date'>
+    <div class="order-list row row-gap-3 mb-3 h-100" wire:loading.remove wire:target='search, date, filterColor'>
         @if ($orders->isEmpty())
             {{-- <h5 class="text-center text-muted mt-3"><i class="fa-solid fa-circle-exclamation"></i> Order tidak ditemukan</h5> --}}
         @else
@@ -67,6 +67,17 @@
                                     <td class="text-nowrap">Plan Date</td>
                                     <td class="text-nowrap">:</td>
                                     <td class="fw-bold">{{ $order->plan_date }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-nowrap">Colors</td>
+                                    <td class="text-nowrap">:</td>
+                                    <td class="fw-bold">
+                                        <ul class="mb-0 ps-3">
+                                            @foreach (explode(' | ', $order->colors) as $color)
+                                                <li>{{ trim($color) }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </td>
                                 </tr>
                             </table>
                             <div class="mx-2">
@@ -179,6 +190,17 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Color</label>
+                            <div wire:ignore.self id="select-color-container">
+                                <select class="form-select @error('filterColor') is-invalid @enderror" id="color-select2" wire:model='filterColor'>
+                                    <option value="" selected>Select Color</option>
+                                    @foreach ($orderFilters->pluck('color')->unique()->filter()->sort() as $color)
+                                        <option value="{{ $color }}">{{ strtoupper($color) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -275,6 +297,21 @@
                 @this.set('filterStyle', filterStyle);
             });
 
+            // Color
+            $('#color-select2').select2({
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+                dropdownParent: $('#filter-modal .modal-content #select-color-container')
+            });
+
+            $('#color-select2').on('change', function (e) {
+                Livewire.emit("loadingStart");
+
+                var filterColor = $('#color-select2').select2("val");
+                @this.set('filterColor', filterColor);
+            });
+
             Livewire.on('clearFilterInput', () => {
                 Livewire.emit("loadingStart");
 
@@ -283,6 +320,7 @@
                 $('#ws-select2').val("").trigger('change');
                 $('#product-type-select2').val("").trigger('change');
                 $('#style-select2').val("").trigger('change');
+                $('#color-select2').val("").trigger('change');
             });
         })
     </script>
