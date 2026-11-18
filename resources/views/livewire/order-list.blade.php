@@ -31,12 +31,12 @@
             {{-- <h5 class="text-center text-muted mt-3"><i class="fa-solid fa-circle-exclamation"></i> Order tidak ditemukan</h5> --}}
         @else
             @foreach ($orders as $order)
-                <a href="{{ $this->baseUrl."/production-panel/index/".$order->id }}" class="order col-md-6 h-100">
-                    <div class="card overflow-hidden h-100">
+                <a href="{{ $this->baseUrl."/production-panel/index/".$order->id }}" class="order col-md-6 d-flex">
+                    <div class="card overflow-hidden w-100">
                         @if ($order->plan_date != date('Y-m-d'))
                             <span class="{{ $this->date < date('Y-m-d') && $order->plan_date < $this->date ? 'bg-defect' : 'bg-success' }} text-light text-center fw-bold p-1 rounded-1" style="position: absolute; width:35%; top:10%; right: -10%; transform:rotate(45deg);">BERLALU</span>
                         @endif
-                        <div class="card-body justify-content-start">
+                        <div class="card-body d-flex flex-column justify-content-start">
                             <table class="table table-responsive mb-1">
                                 <tr>
                                     <td class="text-nowrap">Line</td>
@@ -80,7 +80,7 @@
                                     </td>
                                 </tr>
                             </table>
-                            <div class="mx-2">
+                            <div class="mx-2 mt-auto">
                                 <div class="d-flex justify-content-between w-100">
                                     <p class="mb-1">Output : <b>{{ $order->progress }}</b></p>
                                     <p class="mb-1">Finishline : <b>{{ $order->target }}</b></p>
