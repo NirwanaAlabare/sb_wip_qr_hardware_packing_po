@@ -3,7 +3,7 @@
         <div class="input-group mb-3">
             <input type="hidden" wire:model='date'>
             <input type="text" class="form-control" wire:model.lazy='search' placeholder="Search Order...">
-            <button class="btn btn-success" type="button" id="button-search-order"><i class="fa-regular fa-magnifying-glass"></i></button>
+            <button class="btn btn-success" type="button" id="button-search-order" wire:click='$refresh'><i class="fa-regular fa-magnifying-glass"></i></button>
         </div>
         <button class="btn btn-outline-success mb-3" type="button" wire:click="preSubmitFilter" id="filter-button"><i class="fa-regular fa-filter"></i></button>
         {{-- <a href="{{ $this->baseUrl.'/production-panel/universal/' }}" class="btn btn-success mb-3">
@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <div class="w-100" wire:loading wire:target='search, date, filterLine, filterBuyer, filterWs, filterProductType, filterStyle, filterColor'>
+    <div class="w-100" wire:loading wire:target='$refresh, search, date, filterLine, filterBuyer, filterWs, filterProductType, filterStyle, filterColor'>
         <div class="loading-container">
             <div class="loading"></div>
         </div>
@@ -26,7 +26,7 @@
         </p>
     </div>
 
-    <div class="order-list row row-gap-3 mb-3 h-100" wire:loading.remove wire:target='search, date, filterColor'>
+    <div class="order-list row row-gap-3 mb-3 h-100" wire:loading.remove wire:target='$refresh, search, date, filterColor'>
         @if ($orders->isEmpty())
             {{-- <h5 class="text-center text-muted mt-3"><i class="fa-solid fa-circle-exclamation"></i> Order tidak ditemukan</h5> --}}
         @else
