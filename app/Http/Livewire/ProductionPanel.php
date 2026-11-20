@@ -99,9 +99,8 @@ class ProductionPanel extends Component
         $this->orderInfo = $orderInfo;
         $this->orderWsDetails = $orderWsDetails;
 
-        // Put data on session
+        // Hanya untuk halaman history/profile/undo, panel ini tidak membaca session (supaya tidak tertimpa tab lain)
         $session->put("orderInfo", $orderInfo);
-        $session->put("orderWsDetails", $orderWsDetails);
 
         // Default value
         $this->selectedColor = $this->orderInfo->id;
@@ -156,8 +155,34 @@ class ProductionPanel extends Component
             ->groupBy('so_det.id')
             ->orderBy('so_det_id')
             ->get();
+    }
 
-        $session->put("orderWsDetailSizes", $this->orderWsDetailSizes);
+    // Ambil orderInfo lengkap (dengan buyer, ws, style, dll) berdasarkan master plan id
+    public function getOrderInfo($id)
+    {
+        return MasterPlan::selectRaw("
+                master_plan.id as id,
+                master_plan.tgl_plan as tgl_plan,
+                REPLACE(master_plan.sewing_line, '_', ' ') as sewing_line,
+                act_costing.id as id_ws,
+                act_costing.kpno as ws_number,
+                act_costing.styleno as style_name,
+                mastersupplier.supplier as buyer_name,
+                so_det.styleno_prod as reff_number,
+                master_plan.color as color,
+                so_det.size as size,
+                so.qty as qty_order,
+                CONCAT(masterproduct.product_group, ' - ', masterproduct.product_item) as product_type
+            ")
+            ->leftJoin('act_costing', 'act_costing.id', '=', 'master_plan.id_ws')
+            ->leftJoin('so', 'so.id_cost', '=', 'act_costing.id')
+            ->leftJoin('so_det', 'so_det.id_so', '=', 'so.id')
+            ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
+            ->leftJoin('master_size_new', 'master_size_new.size', '=', 'so_det.size')
+            ->leftJoin('masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
+            ->where('so_det.cancel', 'N')
+            ->where('master_plan.id', $id)
+            ->first();
     }
 
     public function toRft()
@@ -384,29 +409,7 @@ class ProductionPanel extends Component
 
         $this->selectedSize = 'all';
 
-        $this->orderInfo = MasterPlan::selectRaw("
-                master_plan.id as id,
-                master_plan.tgl_plan as tgl_plan,
-                REPLACE(master_plan.sewing_line, '_', ' ') as sewing_line,
-                act_costing.id as id_ws,
-                act_costing.kpno as ws_number,
-                act_costing.styleno as style_name,
-                mastersupplier.supplier as buyer_name,
-                so_det.styleno_prod as reff_number,
-                master_plan.color as color,
-                so_det.size as size,
-                so.qty as qty_order,
-                master_plan.sewing_line as sewing_line,
-                CONCAT(masterproduct.product_group, ' - ', masterproduct.product_item) as product_type
-            ")
-            ->leftJoin('act_costing', 'act_costing.id', '=', 'master_plan.id_ws')
-            ->leftJoin('so', 'so.id_cost', '=', 'act_costing.id')
-            ->leftJoin('so_det', 'so_det.id_so', '=', 'so.id')
-            ->leftJoin('mastersupplier', 'mastersupplier.id_supplier', '=', 'act_costing.id_buyer')
-            ->leftJoin('master_size_new', 'master_size_new.size', '=', 'so_det.size')
-            ->leftJoin('masterproduct', 'masterproduct.id', '=', 'act_costing.id_product')
-            ->where('master_plan.id', $this->selectedColor)
-            ->first();
+        $this->orderInfo = $this->getOrderInfo($this->selectedColor);
 
         if (!$this->orderInfo) {
             return $this->emit('reloadPage');
@@ -464,12 +467,12 @@ class ProductionPanel extends Component
 
         $this->emit('setSelectedSizeSelect2', $this->selectedColor);
 
+        // Hanya untuk halaman history/profile/undo
         session()->put("orderInfo", $this->orderInfo);
-        session()->put("orderWsDetails", $this->orderWsDetails);
-        session()->put("orderWsDetailSizes", $this->orderWsDetailSizes);
 
+        // Kirim order yang baru ke komponen input di tab ini saja (lewat event, bukan session)
         if ($this->rft) {
-            $this->emit('updateWsDetailSizes', 'rft');
+            $this->emit('updateWsDetailSizes', 'rft', $this->orderInfo->id, $this->orderWsDetailSizes);
         }
         // else if ($this->defect)
         // {
@@ -480,10 +483,10 @@ class ProductionPanel extends Component
         // }
         else if ($this->reject)
         {
-            $this->emit('updateWsDetailSizes', 'reject');
+            $this->emit('updateWsDetailSizes', 'reject', $this->orderInfo->id, $this->orderWsDetailSizes);
         }
         else {
-            $this->emit('updateWsDetailSizes', 'panel');
+            $this->emit('updateWsDetailSizes', 'panel', $this->orderInfo->id, $this->orderWsDetailSizes);
         }
 
         $this->emit('getPo');
@@ -541,10 +544,10 @@ class ProductionPanel extends Component
 
     public function render(SessionManager $session)
     {
-        // Keep this data with session
-        $this->orderInfo = $session->get("orderInfo", $this->orderInfo);
-        $this->orderWsDetails = $session->get("orderWsDetails", $this->orderWsDetails);
-        $this->orderWsDetailSizes = $session->get("orderWsDetailSizes", $this->orderWsDetailSizes);
+        // Ambil ulang berdasarkan id milik tab ini (bukan session, supaya tidak tertimpa tab lain)
+        $this->orderInfo = $this->getOrderInfo($this->orderInfo->id) ?? $this->orderInfo;
+        $this->orderWsDetails = collect($this->orderWsDetails)->map(function ($item) { return is_array($item) ? (object) $item : $item; });
+        $this->orderWsDetailSizes = collect($this->orderWsDetailSizes)->map(function ($item) { return is_array($item) ? (object) $item : $item; });
 
         $this->orderDate = $this->orderInfo->tgl_plan;
         $this->selectedColor = $this->orderInfo->id;

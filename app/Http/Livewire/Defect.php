@@ -277,16 +277,15 @@ class Defect extends Component
             // One Straight Format
             $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $numberingInput)->first();
 
-            if ($numberingData) {
-                $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
-                $this->noCutInput = $numberingData->no_cut_size;
-                $this->numberingInput = $numberingInput;
-
-                if (!$this->sizeInput) {
-                    return $this->emit('alert', 'error', "QR belum terdaftar.");
-                }
+            // QR harus terdaftar (jangan pakai sisa data scan sebelumnya)
+            if (!$numberingData || empty($numberingData->so_det_id)) {
+                return $this->emit('alert', 'error', "QR belum terdaftar.");
             }
+
+            $this->sizeInput = $numberingData->so_det_id;
+            $this->sizeInputText = $numberingData->size;
+            $this->noCutInput = $numberingData->no_cut_size;
+            $this->numberingInput = $numberingInput;
         }
 
         $validation = Validator::make([
@@ -463,7 +462,7 @@ class Defect extends Component
 
                 $endlineOutputCount = DB::connection('mysql_sb')->table('output_rfts')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count();
 
-                if (($endlineOutputCount > 0) && ((DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count()) < 1) && ($this->orderWsDetailSizes->where('so_det_id', $numberingData->so_det_id)->count() > 0)) {
+                if ($numberingData && ($endlineOutputCount > 0) && ((DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidDefect[$i]['numberingInput'])->count()) < 1) && ($this->orderWsDetailSizes->where('so_det_id', $numberingData->so_det_id)->count() > 0)) {
                     array_push($rapidDefectFiltered, [
                         'master_plan_id' => $this->orderInfo->id,
                         'so_det_id' => $numberingData->so_det_id,

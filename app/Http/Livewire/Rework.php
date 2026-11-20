@@ -493,16 +493,15 @@ class Rework extends Component
             // One Straight Format
                 $numberingData = DB::connection("mysql_nds")->table("year_sequence")->selectRaw("year_sequence.*, year_sequence.id_year_sequence no_cut_size")->where("id_year_sequence", $numberingInput)->first();
 
-            if ($numberingData) {
-                $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
-                $this->noCutInput = $numberingData->no_cut_size;
-                $this->numberingInput = $numberingInput;
-
-                if (!$this->sizeInput) {
-                    return $this->emit('alert', 'error', "QR belum terdaftar.");
-                }
+            // QR harus terdaftar (jangan pakai sisa data scan sebelumnya)
+            if (!$numberingData || empty($numberingData->so_det_id)) {
+                return $this->emit('alert', 'error', "QR belum terdaftar.");
             }
+
+            $this->sizeInput = $numberingData->so_det_id;
+            $this->sizeInputText = $numberingData->size;
+            $this->noCutInput = $numberingData->no_cut_size;
+            $this->numberingInput = $numberingInput;
         }
 
         $validatedData = $this->validate();

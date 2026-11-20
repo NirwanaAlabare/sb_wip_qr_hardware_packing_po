@@ -208,7 +208,7 @@
         {{-- Rft --}}
         {{-- @if ($rft) --}}
         <div class="{{ $rft ? '' : 'd-none' }}">
-            @livewire('rft', ["orderWsDetailSizes" => $orderWsDetailSizes])
+            @livewire('rft', ["orderInfo" => $orderInfo, "orderWsDetailSizes" => $orderWsDetailSizes])
         </div>
         {{-- @endif --}}
 
@@ -227,7 +227,7 @@
         {{-- Reject --}}
         {{-- @if ($reject) --}}
         <div class="{{ $reject ? '' : 'd-none' }}">
-            @livewire('reject', ["orderWsDetailSizes" => $orderWsDetailSizes])
+            @livewire('reject', ["orderInfo" => $orderInfo, "orderWsDetailSizes" => $orderWsDetailSizes])
         </div>
         {{-- @endif --}}
 

@@ -109,11 +109,14 @@ class RejectTemporary extends Component
                 }
             }
 
-            if ($numberingData) {
-                $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
-                $this->noCutInput = $numberingData->no_cut_size;
+            // QR harus terdaftar (jangan pakai sisa data scan sebelumnya)
+            if (!$numberingData || empty($numberingData->so_det_id)) {
+                return $this->emit('alert', 'error', "QR belum terdaftar.");
             }
+
+            $this->sizeInput = $numberingData->so_det_id;
+            $this->sizeInputText = $numberingData->size;
+            $this->noCutInput = $numberingData->no_cut_size;
         }
 
         $validatedData = $this->validate();
@@ -222,8 +225,8 @@ class RejectTemporary extends Component
 
                 $endlineOutputData = DB::connection('mysql_sb')->table('output_rfts')->where("kode_numbering", $this->rapidReject[$i]['numberingInput'])->first();
 
-                $thisOrderWsDetailSize = $this->orderWsDetailSizes->where('so_det_id', $numberingData->so_det_id)->first();
-                if (((DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count()) < 1) && ($thisOrderWsDetailSize) && ($endlineOutputData)) {
+                $thisOrderWsDetailSize = $numberingData ? $this->orderWsDetailSizes->where('so_det_id', $numberingData->so_det_id)->first() : null;
+                if ($numberingData && ((DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count()) < 1) && ($thisOrderWsDetailSize) && ($endlineOutputData)) {
                     array_push($rapidRejectFiltered, [
                         'master_plan_id' => $thisOrderWsDetailSize['master_plan_id'],
                         'so_det_id' => $numberingData->so_det_id,
@@ -237,7 +240,7 @@ class RejectTemporary extends Component
 
                     $success += 1;
                 } else {
-                    if (((DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('temporary_output_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count()) < 1)) {
+                    if ($numberingData && ((DB::connection('mysql_sb')->table('output_rejects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_rfts_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('output_defects_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count() + DB::connection('mysql_sb')->table('temporary_output_packing')->where('kode_numbering', $this->rapidReject[$i]['numberingInput'])->count()) < 1)) {
                         array_push($rapidTemporaryFiltered, [
                             'line_id' => Auth::user()->line_id,
                             'so_det_id' => $numberingData->so_det_id,

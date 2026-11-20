@@ -362,11 +362,14 @@ class ReworkUniversal extends Component
                 }
             }
 
-            if ($numberingData) {
-                $this->sizeInput = $numberingData->so_det_id;
-                $this->sizeInputText = $numberingData->size;
-                $this->noCutInput = $numberingData->no_cut_size;
+            // QR harus terdaftar (jangan pakai sisa data scan sebelumnya)
+            if (!$numberingData || empty($numberingData->so_det_id)) {
+                return $this->emit('alert', 'error', "QR belum terdaftar.");
             }
+
+            $this->sizeInput = $numberingData->so_det_id;
+            $this->sizeInputText = $numberingData->size;
+            $this->noCutInput = $numberingData->no_cut_size;
         }
 
         $validatedData = $this->validate();

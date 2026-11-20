@@ -100,10 +100,10 @@ class Reject extends Component
         'clearInput' => 'clearInput'
     ];
 
-    public function mount(SessionManager $session, $orderWsDetailSizes)
+    public function mount($orderInfo, $orderWsDetailSizes)
     {
+        $this->orderInfo = $orderInfo;
         $this->orderWsDetailSizes = $orderWsDetailSizes;
-        $session->put('orderWsDetailSizes', $orderWsDetailSizes);
         $this->sizeInput = null;
 
         $this->rapidReject = [];
@@ -148,15 +148,18 @@ class Reject extends Component
         $this->emit('loadRejectPageJs');
     }
 
-    public function updateWsDetailSizes($panel)
+    public function updateWsDetailSizes($panel, $orderInfoId = null, $orderWsDetailSizes = null)
     {
         $this->sizeInput = null;
         $this->sizeInputText = null;
         $this->noCutInput = null;
         $this->numberingInput = null;
 
-        $this->orderInfo = session()->get('orderInfo', $this->orderInfo);
-        $this->orderWsDetailSizes = session()->get('orderWsDetailSizes', $this->orderWsDetailSizes);
+        // Ganti order hanya kalau dikirim dari panel di tab ini (ganti color)
+        if ($orderInfoId) {
+            $this->orderInfo = MasterPlan::find($orderInfoId);
+            $this->orderWsDetailSizes = collect($orderWsDetailSizes);
+        }
         $this->selectedColor = $this->orderInfo->id;
         $this->selectedColorName = $this->orderInfo->color;
 
@@ -929,9 +932,6 @@ class Reject extends Component
                 $this->emit('alert', 'error', $message);
             }
         }
-
-        $this->orderInfo = $session->get('orderInfo', $this->orderInfo);
-        $this->orderWsDetailSizes = $session->get('orderWsDetailSizes', $this->orderWsDetailSizes);
 
         $this->selectedColor = $this->orderInfo->id;
         $this->selectedColorName = $this->orderInfo->color;

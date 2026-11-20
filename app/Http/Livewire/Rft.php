@@ -6,6 +6,7 @@ use App\Models\SignalBit\OutputGudangStok;
 use Livewire\Component;
 use Illuminate\Session\SessionManager;
 use App\Models\SignalBit\Rft as RftModel;
+use App\Models\SignalBit\MasterPlan;
 // use App\Models\SignalBit\Rework;
 // use App\Models\SignalBit\Defect;
 // use App\Models\SignalBit\Reject;
@@ -52,10 +53,10 @@ class Rft extends Component
         'toInputPanel' => 'resetError'
     ];
 
-    public function mount(SessionManager $session, $orderWsDetailSizes)
+    public function mount($orderInfo, $orderWsDetailSizes)
     {
+        $this->orderInfo = $orderInfo;
         $this->orderWsDetailSizes = $orderWsDetailSizes;
-        $session->put('orderWsDetailSizes', $orderWsDetailSizes);
         $this->sizeInput = null;
         $this->sizeInputText = null;
         $this->noCutInput = null;
@@ -103,15 +104,18 @@ class Rft extends Component
         return false;
     }
 
-    public function updateWsDetailSizes($panel)
+    public function updateWsDetailSizes($panel, $orderInfoId = null, $orderWsDetailSizes = null)
     {
         $this->sizeInput = null;
         $this->sizeInputText = null;
         $this->noCutInput = null;
         $this->numberingInput = null;
 
-        $this->orderInfo = session()->get('orderInfo', $this->orderInfo);
-        $this->orderWsDetailSizes = session()->get('orderWsDetailSizes', $this->orderWsDetailSizes);
+        // Ganti order hanya kalau dikirim dari panel di tab ini (ganti color)
+        if ($orderInfoId) {
+            $this->orderInfo = MasterPlan::find($orderInfoId);
+            $this->orderWsDetailSizes = collect($orderWsDetailSizes);
+        }
         $this->selectedColor = $this->orderInfo->id;
         $this->selectedColorName = $this->orderInfo->color;
 
@@ -203,7 +207,7 @@ class Rft extends Component
                 if ($finishlineOutputData) {
                     $currentData = $this->orderWsDetailSizes->where('id_ws', $numberingData->id_ws)->where('color', $numberingData->color)->filter(function ($item) use ($numberingData) { return $item['size'] == $numberingData->size || $item['so_det_id'] == $numberingData->so_det_id; })->first();
 
-                    if ($currentData && $this->orderInfo && (trim($currentData['color']) == trim($this->orderInfo->color))) {
+                    if ($currentData && $this->orderInfo && (strtoupper(trim($currentData['color'])) == strtoupper(trim($this->orderInfo->color)))) {
                         $currentSizeInput = $this->sizeInput;
                         $currentSizeInputText = $this->sizeInputText;
                         // $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
@@ -364,6 +368,8 @@ class Rft extends Component
 
         $rapidRftFiltered = [];
         $rapidRftFilteredNds = [];
+        $rapidRftKodes = [];
+        $rapidPoQty = [];
         $success = 0;
         $fail = 0;
 
@@ -385,16 +391,43 @@ class Rft extends Component
 
                 // One Straight Format
                 $numberingData = DB::connection("mysql_nds")->table("year_sequence")->
-                    selectRaw("year_sequence.*, so_det.dest, so_det.color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
+                    selectRaw("year_sequence.*, so_det.dest, UPPER(TRIM(so_det.color)) as color, act_costing.id as id_ws, year_sequence.id_year_sequence no_cut_size")->
                     leftJoin("signalbit_erp.so_det", "so_det.id", "=", "year_sequence.so_det_id")->
                     leftJoin("signalbit_erp.so", "so.id", "=", "so_det.id_so")->
                     leftJoin("signalbit_erp.act_costing", "act_costing.id", "=", "so.id_cost")->
                     where("id_year_sequence", $this->rapidRft[$i]['numberingInput'])->
                     first();
 
+                // QR tidak terdaftar
+                if (!$numberingData || !$numberingData->so_det_id) {
+                    $fail += 1;
+                    continue;
+                }
+
+                // QR sudah discan (di DB atau duplikat di batch ini)
+                if (
+                    in_array($this->rapidRft[$i]['numberingInput'], $rapidRftKodes) ||
+                    DB::table('output_rfts_packing_po')->where('kode_numbering', $this->rapidRft[$i]['numberingInput'])->whereIn('type', ['rft', 'reject'])->exists()
+                ) {
+                    $fail += 1;
+                    continue;
+                }
+
+                // WS & Color harus sesuai dengan order yang sedang dibuka
+                $currentData = collect($this->orderWsDetailSizes)->
+                    where('id_ws', $numberingData->id_ws)->
+                    where('color', $numberingData->color)->
+                    filter(function ($item) use ($numberingData) { return data_get($item, 'size') == $numberingData->size || data_get($item, 'so_det_id') == $numberingData->so_det_id; })->
+                    first();
+
+                if (!$currentData || !$this->orderInfo || strtoupper(trim(data_get($currentData, 'color'))) != strtoupper(trim($this->orderInfo->color))) {
+                    $fail += 1;
+                    continue;
+                }
+
                 $finishlineOutputData = DB::connection('mysql_sb')->table('output_rfts_packing')->where("kode_numbering", $this->rapidRft[$i]['numberingInput'])->first();
 
-                if ($finishlineOutputData > 0) {
+                if ($finishlineOutputData) {
 
                     $currentPo = DB::connection("mysql_nds")->table("ppic_master_so")->selectRaw("
                                 ppic_master_so.id,
@@ -402,7 +435,17 @@ class Rft extends Component
                                 ppic_master_so.id_so_det,
                                 so_det.size,
                                 ppic_master_so.qty_po,
-                                COUNT(output_rfts_packing_po.id) as qty_output
+                                (
+                                    COUNT(output_rfts_packing_po.id)
+                                    -
+                                    COALESCE((
+                                        SELECT COUNT(*)
+                                        FROM signalbit_erp.output_rfts_packing_po_return opr
+                                        WHERE opr.master_plan_id = output_rfts_packing_po.master_plan_id
+                                        AND opr.ppic_master_id = output_rfts_packing_po.po_id
+                                        AND opr.so_det_id = output_rfts_packing_po.so_det_id
+                                    ), 0)
+                                ) as qty_output
                             ")
                             ->leftJoin('signalbit_erp.output_rfts_packing_po', 'output_rfts_packing_po.po_id', '=', 'ppic_master_so.id')
                             ->leftJoin('signalbit_erp.so_det', 'so_det.id', '=', 'ppic_master_so.id_so_det')
@@ -419,7 +462,13 @@ class Rft extends Component
                             ->groupBy('ppic_master_so.id')
                             ->first();
 
-                    if ($currentPo) {
+                    // Qty output (termasuk yang sudah masuk di batch ini) tidak boleh melebihi qty PO
+                    $batchQty = $currentPo ? ($rapidPoQty[$currentPo->id] ?? 0) : 0;
+
+                    if ($currentPo && ($currentPo->qty_output + $batchQty) < $currentPo->qty_po) {
+                        $rapidPoQty[$currentPo->id] = $batchQty + 1;
+                        $rapidRftKodes[] = $this->rapidRft[$i]['numberingInput'];
+
                         array_push($rapidRftFiltered, [
                             'master_plan_id' => $this->orderInfo->id,
                             'so_det_id' => $numberingData->so_det_id,
@@ -431,7 +480,9 @@ class Rft extends Component
                             'rft_id' => $finishlineOutputData ? $finishlineOutputData->id : NULL,
                             'type' => 'rft',
                             'department' => 'packing',
-                            'created_by' => Auth::user()->line_id,
+                            'created_by' => Auth::user()->id,
+                            'created_by_username' => Auth::user()->username,
+                            'created_by_line' => Auth::user()->line_type == "multi" ? $this->orderInfo->sewing_line : Auth::user()->line->username,
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now()
                         ]);
@@ -479,9 +530,6 @@ class Rft extends Component
                 $this->emit('alert', 'error', $message);
             }
         }
-
-        $this->orderInfo = $session->get('orderInfo', $this->orderInfo);
-        $this->orderWsDetailSizes = $session->get('orderWsDetailSizes', $this->orderWsDetailSizes);
 
         $this->selectedColor = $this->orderInfo->id;
         $this->selectedColorName = $this->orderInfo->color;
